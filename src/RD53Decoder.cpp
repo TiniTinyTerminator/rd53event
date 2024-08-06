@@ -1,8 +1,6 @@
 #include "RD53Decoder.h"
 #include "RD53Event.h"
 
-
-
 class RD53Decoder {
     std::vector<uint64_t> stream;
     const Rd53StreamConfig *config;

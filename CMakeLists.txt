@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.25)
 
 # Set the project name
 project(RD53)
@@ -7,33 +7,39 @@ project(RD53)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Include CMake modules
+include(CTest)
+include(UseSWIG)
+
+# Find packages
+find_package(SWIG REQUIRED)
+find_package(Python REQUIRED COMPONENTS Interpreter Development)
+
 # Set include and source directories
 set(INC ${CMAKE_SOURCE_DIR}/inc)
 set(SRC ${CMAKE_SOURCE_DIR}/src)
+include_directories(${INC} ${Python_INCLUDE_DIRS})
 
-# Add the header files
-include_directories(${INC})
-
-# Add the source files
-add_library(RD53Event STATIC
+# Add the RD53 library
+add_library(RD53 STATIC
     ${SRC}/RD53Event.cpp
     ${SRC}/RD53Decoder.cpp
 )
 
-# Find SWIG
-find_package(SWIG REQUIRED)
-include(${SWIG_USE_FILE})
-
-# Set the language for SWIG (e.g., Python)
+# Set the language for SWIG and create the interface
 set(SWIG_LANGUAGE python)
-
-# Create SWIG interface
 set(SWIG_INTERFACE ${CMAKE_SOURCE_DIR}/swig/RD53.i)
+set_property(SOURCE ${SWIG_INTERFACE} PROPERTY CPLUSPLUS ON)
 
-# Add SWIG module
-swig_add_library(RD53Event_swig
+# Add SWIG module with documentation enabled
+set(CMAKE_SWIG_FLAGS -doxygen)
+swig_add_library(RD53py
     LANGUAGE ${SWIG_LANGUAGE}
     SOURCES ${SWIG_INTERFACE}
             ${SRC}/RD53Event.cpp
             ${SRC}/RD53Decoder.cpp
 )
+
+# Enable testing
+enable_testing()
+add_test(NAME PythonBindingsTest COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/test/test.py)

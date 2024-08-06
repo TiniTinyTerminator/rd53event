@@ -9,12 +9,12 @@
 #include <algorithm>
 #include <memory>
 
-constexpr int N_QCORES_VERTICAL = 336 / 2; // this is the physical number of rows quarter cores on the readout chip
+constexpr int N_QCORES_VERTICAL = 336 / 2;   // this is the physical number of rows quarter cores on the readout chip
 constexpr int N_QCORES_HORIZONTAL = 432 / 8; // this is the physical number of columns quarter cores on the readout chip
 
 struct Rd53StreamConfig
 {
-    int size_qcore_vertical = 4; // this is the physical dimensons of the quarter cores on the sensor
+    int size_qcore_vertical = 4;   // this is the physical dimensons of the quarter cores on the sensor
     int size_qcore_horizontal = 4; // this is the physical dimensons of the quarter cores on the sensor
 
     bool chip_id;
@@ -49,13 +49,23 @@ public:
     QuarterCore() = default;
 
     /**
+     * @brief Returns the hit value at the specified column and row
+     *
+     * @param x The column index of the hit
+     * @param y The row index of the hit
+     * @return A pair containing a boolean indicating whether a hit exists and the total value of the hit
+     * @throws std::runtime_error If the column or row index is out of bounds or the qcore size is wrong
+     */
+    std::pair<bool, uint8_t> get_hit(uint8_t x, uint8_t y) const;
+
+    /**
      * @brief Returns the hit value at the specified index in the hit map
      *
      * @param index The index of the hit value to retrieve
-     * @return The hit value at the specified index
+     * @return A pair containing a boolean indicating whether a hit exists and the total value of the hit
      * @throws std::runtime_error If the index is out of bounds or the qcore size is wrong
      */
-    std::pair<bool, uint8_t> get_hit(int index) const;
+    std::pair<bool, uint8_t> get_hit(uint8_t index) const;
 
     /**
      * @brief Sets the hit value at the specified column and row
@@ -63,29 +73,57 @@ public:
      * @param col The column index of the hit
      * @param row The row index of the hit
      * @param tot The total value of the hit (default: 0)
+     *
+     * @throws std::runtime_error If the column or row index is out of bounds or the qcore size is wrong
      */
-    void set_hit(int col, int row, int tot = 0);
+    void set_hit(uint8_t col, uint8_t row, uint8_t tot);
+
+    /**
+     * @brief Sets the hit value at the specified index in the hit map
+     *
+     * @param index The index of the hit value to set
+     * @param tot The total value of the hit
+     *
+     * @throws std::runtime_error If the index is out of bounds or the qcore size is wrong
+     */
+    void set_hit(uint8_t index, uint8_t tot);
 
     /**
      * @brief Sets the hit value using a raw integer
      *
      * @param value The raw integer value to set the hit map to
      */
-    void set_hit_raw(int value);
+    void set_hit_raw(uint16_t value, uint64_t tots);
 
     /**
-     * @brief Returns the raw integer value of the hit map
+     * @brief Returns a pair containing the raw hit value and the raw total value of the hit map.
      *
-     * @return The raw integer value of the hit map
+     * The raw hit value is a 16-bit unsigned integer, where each bit corresponds to a hit in the hit map.
+     * The raw total value is a 64-bit unsigned integer, where each 4-bit group corresponds to the total value of a hit in the hit map.
+     *
+     * @return A pair containing the raw hit value and the raw total value of the hit map.
      */
-    int get_hit_raw() const;
+    std::pair<uint16_t, uint64_t> get_hit_raw() const;
 
     /**
-     * @brief Returns a sparsified map of hits in the quarter core
+     * @brief Returns a sparsified map of hits in the quarter core.
      *
-     * @return A vector of pairs containing the row and column indices of hits
+     * The function returns a vector of triplets containing the row, column and total values of hits in the quarter core.
+     * This sparsification is achieved by only storing hits that have a non-zero total value.
+     *
+     * @return A vector of triplets containing the row, column and total values of hits.
      */
-    std::vector<std::pair<int, int>> sparsified_hit_map() const;
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> get_hit_vectors() const;
+
+    /**
+     * @brief Returns a 2D vector representing the hit map of the QuarterCore
+     *
+     * The function returns a 2D vector where each element is a pair of a boolean
+     * indicating whether a hit exists and the total value of the hit.
+     *
+     * @return A 2D vector representing the hit map of the QuarterCore
+     */
+    std::vector<std::vector<std::pair<bool, uint8_t>>> get_hit_map() const;
 
     /**
      * @brief Returns the binary tree representation of the hit map
@@ -109,25 +147,27 @@ public:
      * @param col The column index
      * @return The index in the hit map corresponding to the specified row and column
      */
-    int hit_index(int row, int col) const;
+    uint8_t hit_index(uint8_t row, uint8_t col) const;
 
     // Member variables
     /** The Rd53StreamConfig object that contains the configuration parameters */
     const Rd53StreamConfig *config;
-    /** The hit map representing the hits in the quarter core */
-    std::vector<std::vector<bool>> hit_map;
-    /** The total values of the hits in the quarter core */
-    std::vector<char> tots;
     /** The column index of the quarter core */
-    int col;
+    uint8_t col;
     /** The row index of the quarter core */
-    int row;
+    uint8_t row;
     /** A boolean indicating whether the quarter core is the last in the event */
     bool is_last;
     /** A boolean indicating whether the quarter core is a neighbour */
     bool is_neighbour;
     /** A boolean indicating whether the quarter core is the last in the row */
     bool is_last_in_event;
+
+private:
+    /** The hit map representing the hits in the quarter core */
+    std::array<bool, 16> hits;
+    /** The total values of the hits in the quarter core */
+    std::array<uint8_t, 16> tots;
 };
 
 /**
@@ -161,13 +201,12 @@ public:
      */
     void get_quarter_cores();
 
-
-    /**
-     * @brief Set the quarter cores in the event
-     *
-     * @param qcores The vector of QuarterCore objects to set
-     */
-    void set_quarter_cores(const std::vector<QuarterCore> &qcores);
+    // /**
+    //  * @brief Set the quarter cores in the event
+    //  *
+    //  * @param qcores The vector of QuarterCore objects to set
+    //  */
+    // void set_quarter_cores(const std::vector<QuarterCore> &qcores);
 
     /**
      * @brief Serializes the event data into a vector of 64-bit integers
@@ -184,14 +223,14 @@ public:
     int event_tag;
     /** The chip ID */
     int chip_id;
-    /** The local chamber ID */
+    /** The l1 trigger ID */
     int lcid;
-    /** The board chamber ID */
+    /** The bunch crossing ID */
     int bcid;
     /** The vector of QuarterCore objects representing the quarter cores in the event */
     std::vector<QuarterCore> qcores;
 
-    private:
+private:
     /**
      * @brief Retrieves the quarter core data in the event
      *
@@ -199,5 +238,10 @@ public:
      */
     std::vector<std::tuple<int, int, std::string>> _retrieve_qcore_data();
 };
+
+/**
+ * @brief Prints "Hello World!" to the console
+ */
+void say_hello_world(std::string);
 
 #endif // RD53EVENT_H

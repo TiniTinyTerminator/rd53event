@@ -3,99 +3,105 @@
 QuarterCore::QuarterCore(const Rd53StreamConfig &config, int col, int row)
     : config(&config), col(col), row(row), is_last(false), is_neighbour(false), is_last_in_event(false)
 {
-    hit_map.resize(this->config->size_qcore_vertical, std::vector<bool>(this->config->size_qcore_horizontal, 0));
-    tots.resize(this->config->size_qcore_vertical * this->config->size_qcore_horizontal, 0);
+    hits.fill(false);
+    tots.fill(0);
 }
 
-std::pair<bool, uint8_t> QuarterCore::get_hit(int index) const
+std::pair<bool, uint8_t> QuarterCore::get_hit(uint8_t index) const
 {
-    int rem8, row, col;
 
     if (index < 0 || index >= 16)
         throw std::runtime_error("ERROR: index out of bounds");
-    else if (config->size_qcore_vertical == 4 && config->size_qcore_horizontal == 4)
-    {
-        rem8 = index % 8;
-        row = (index - rem8) / 4 + (index % 2);
-        col = (rem8 - rem8 % 2) / 2;
-    }
-    else if (config->size_qcore_vertical == 2 && config->size_qcore_horizontal == 8)
-    {
-        int rem16 = index % 16;
-        row = rem16 / 8;
-        col = rem16 % 8;
-    }
-    else
-    {
-        throw std::runtime_error("ERROR: Wrong qcore size");
-    }
 
-    return {hit_map[col][row], tots[index]};
+    return {hits[index], tots[index]};
 }
 
-void QuarterCore::set_hit(int col, int row, int tot)
+std::pair<bool, uint8_t> QuarterCore::get_hit(uint8_t x, uint8_t y) const
 {
-    if (0 <= col && col < config->size_qcore_horizontal && 0 <= row && row < config->size_qcore_vertical)
-    {
-        hit_map[col][row] = 1;
-        tots[hit_index(row, col)] = tot;
-    }
-    else
-    {
+    int index = hit_index(x, y);
+
+    if (index < 0 || index >= 16)
+        throw std::runtime_error("ERROR: index out of bounds");
+
+    return {hits[index], tots[index]};
+}
+
+void QuarterCore::set_hit(uint8_t index, uint8_t tot)
+{
+    if (index >= 16)
         throw std::runtime_error("ERROR: col row out of range");
+
+    hits[index] = true;
+    tots[index] = tot;
+    
+}
+
+void QuarterCore::set_hit(uint8_t x, uint8_t y, uint8_t tot)
+{
+    int index = hit_index(x, y);
+
+    if (index >= 16)
+        throw std::runtime_error("ERROR: col row out of range");
+
+    hits[index] = true;
+    tots[index] = tot;
+    
+}
+
+
+void QuarterCore::set_hit_raw(uint16_t hit_raw, uint64_t tots_raw)
+{
+    for (int i = 0; i < 16; ++i)
+    {
+        hits[i] = (hit_raw >> i) & 0x1;
+        tots[i] = (tots_raw >> (i * 4)) & 0xF;
     }
 }
 
-void QuarterCore::set_hit_raw(int value)
+std::pair<uint16_t, uint64_t> QuarterCore::get_hit_raw() const
 {
-    for (int i = 0; i < config->size_qcore_vertical * config->size_qcore_horizontal; ++i)
+    uint16_t raw_hits = 0;
+    uint64_t raw_tots = 0;
+    for (int i = 0; i < 16; ++i)
     {
-        int row, col;
-        if (config->size_qcore_vertical == 4 && config->size_qcore_horizontal == 4)
-        {
-            int rem8 = i % 8;
-            row = (i - rem8) / 4 + (i % 2);
-            col = (rem8 - rem8 % 2) / 2;
-        }
-        else if (config->size_qcore_vertical == 2 && config->size_qcore_horizontal == 8)
-        {
-            int rem16 = i % 16;
-            row = rem16 / 8;
-            col = rem16 % 8;
-        }
-        else
-        {
-            throw std::runtime_error("ERROR: Wrong qcore size");
-        }
+        raw_hits |= (hits[i] & 0x1) << i;
+        raw_tots |= (tots[i] & 0xF) << (i * 4);
 
-        hit_map[col][row] = (value >> i) & 0x1;
     }
+    return {raw_hits, raw_tots};
 }
 
-int QuarterCore::get_hit_raw() const
+std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> QuarterCore::get_hit_vectors() const
 {
-    int raw = 0;
-    for (int i = 0; i < config->size_qcore_vertical * config->size_qcore_horizontal; ++i)
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> result;
+    for (int x = 0; x < config->size_qcore_horizontal; ++x)
     {
-        raw |= std::get<0>(get_hit(i)) << i;
-    }
-    return raw;
-}
-
-std::vector<std::pair<int, int>> QuarterCore::sparsified_hit_map() const
-{
-    std::vector<std::pair<int, int>> result;
-    for (int col = 0; col < config->size_qcore_horizontal; ++col)
-    {
-        for (int row = 0; row < config->size_qcore_vertical; ++row)
+        for (int y = 0; y < config->size_qcore_vertical; ++y)
         {
-            if (hit_map[col][row] == 1)
+            uint8_t index = hit_index(y, x);
+
+            if (hits[index])
             {
-                result.emplace_back(row, col);
+                result.push_back({x, y, tots[index]});
             }
         }
     }
     return result;
+}
+
+std::vector<std::vector<std::pair<bool, uint8_t>>> QuarterCore::get_hit_map() const
+{
+    std::vector<std::vector<std::pair<bool, uint8_t>>> hit_map(config->size_qcore_horizontal, std::vector<std::pair<bool, uint8_t>>(config->size_qcore_vertical));
+
+    for (int x = 0; x < config->size_qcore_horizontal; ++x)
+    {
+        for (int y = 0; y < config->size_qcore_vertical; ++y)
+        {
+            uint8_t index = hit_index(y, x);
+            hit_map[x][y] = {hits[index], tots[index]};
+        }
+    }
+    return hit_map;
 }
 
 std::pair<int, int> QuarterCore::get_binary_tree() const
@@ -112,8 +118,8 @@ std::pair<int, int> QuarterCore::get_binary_tree() const
         int quarter_id = (pair_id - (pair_id % 2)) / 2;
         int half_id = (quarter_id - (quarter_id % 2)) / 2;
 
-        bool hit_bottom = std::get<0>(get_hit((8 - pair_id) * 2 - 1));
-        bool hit_top = std::get<0>(get_hit((8 - pair_id) * 2 - 2));
+        bool hit_bottom = hits[(8 - pair_id) * 2 - 1];
+        bool hit_top = hits[(8 - pair_id) * 2 - 2];
 
         pair_hitor[pair_id] = hit_top || hit_bottom;
 
@@ -229,7 +235,7 @@ std::vector<std::tuple<int, int, std::string>> QuarterCore::serialize_qcore(bool
         qcore_data.push_back(std::make_tuple(8, row, std::string("row")));
     }
 
-    auto [bintree, bintree_length] = config->compressed_hitmap ? get_binary_tree() : std::make_pair<int, int>(get_hit_raw(), 16);
+    auto [bintree, bintree_length] = config->compressed_hitmap ? get_binary_tree() : std::make_pair<int, int>(std::get<0>(get_hit_raw()), 16);
 
     qcore_data.push_back(std::make_tuple(bintree_length, bintree, std::string("binary tree")));
 
@@ -238,9 +244,9 @@ std::vector<std::tuple<int, int, std::string>> QuarterCore::serialize_qcore(bool
 
         for(uint8_t i = 0; i < 16; i++)
         {
-            if(std::get<0>(get_hit(i)))
+            if(hits[16 - i])
             {
-                qcore_data.push_back(std::make_tuple(4, tots[i], std::string("tot from index " + std::to_string(i))));
+                qcore_data.push_back(std::make_tuple(4, tots[16 - i], std::string("tot from index " + std::to_string(i))));
             }
         }
 
@@ -249,9 +255,9 @@ std::vector<std::tuple<int, int, std::string>> QuarterCore::serialize_qcore(bool
     return qcore_data;
 }
 
-int QuarterCore::hit_index(int row, int col) const
+uint8_t QuarterCore::hit_index(uint8_t row, uint8_t col) const
 {
-    if (0 > col || col >= config->size_qcore_horizontal || 0 > row || row >= config->size_qcore_vertical)
+    if (col >= config->size_qcore_horizontal || row >= config->size_qcore_vertical)
     {
         throw std::runtime_error("ERROR: coordinates out of bounds");
     }
@@ -291,12 +297,12 @@ void Event::get_quarter_cores()
         int row_in_qcore = y % config->size_qcore_vertical;
         int qrow = (y - row_in_qcore) / config->size_qcore_vertical;
 
-        if (qcore_dict.find(std::make_pair(qcol, qrow)) == qcore_dict.end())
+        if (qcore_dict.find({qcol, qrow}) == qcore_dict.end())
         {
-            qcore_dict[std::make_pair(qcol, qrow)] = QuarterCore(*config, qcol, qrow);
+            qcore_dict[{qcol, qrow}] = QuarterCore(*config, qcol, qrow);
         }
 
-        qcore_dict[std::make_pair(qcol, qrow)].set_hit(col_in_qcore, row_in_qcore, tot);
+        qcore_dict[{qcol, qrow}].set_hit(col_in_qcore, row_in_qcore, tot);
     }
 
     for (auto it = qcore_dict.begin(); it != qcore_dict.end(); ++it)
@@ -412,4 +418,8 @@ std::vector<std::tuple<int, int, std::string>> Event::_retrieve_qcore_data()
     }
 
     return qcore_packages;
+}
+
+void say_hello_world(std::string r) {
+    std::cout << r << std::endl;
 }

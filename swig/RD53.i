@@ -7,17 +7,19 @@
 
 %include "std_string.i"
 %include "std_array.i"
+// %include "std_vector.i"
+// %include "std_pair.i"
 %include "inttypes.i"
 
-// Custom typemap for converting std::vector to Python list
+// Typemap for converting std::vector<std::vector<std::pair<bool, uint8_t>>> to Python list
 %typemap(out) std::vector<std::vector<std::pair<bool, uint8_t>>> {
     PyObject *py_list = PyList_New($1.size());
     for (size_t i = 0; i < $1.size(); ++i) {
-        PyObject *inner_list = PyList_New($1[i].size());
-        for (size_t j = 0; j < $1[i].size(); ++j) {
+        PyObject *inner_list = PyList_New($1.at(i).size());
+        for (size_t j = 0; j < $1.at(i).size(); ++j) {
             PyObject *pair = PyTuple_New(2);
-            PyTuple_SetItem(pair, 0, PyBool_FromLong($1[i][j].first));
-            PyTuple_SetItem(pair, 1, PyLong_FromUnsignedLong($1[i][j].second));
+            PyTuple_SetItem(pair, 0, PyBool_FromLong($1.at(i)[j].first));
+            PyTuple_SetItem(pair, 1, PyLong_FromUnsignedLong($1.at(i)[j].second));
             PyList_SetItem(inner_list, j, pair);
         }
         PyList_SetItem(py_list, i, inner_list);
@@ -25,53 +27,52 @@
     $result = py_list;
 }
 
-// Custom typemap for converting std::vector<std::tuple<int, int, int>> to Python list
+// Typemap for converting std::vector<std::tuple<int, int, int>> to Python list
 %typemap(out) std::vector<std::tuple<int, int, int>> {
     PyObject *py_list = PyList_New($1.size());
     for (size_t i = 0; i < $1.size(); ++i) {
         PyObject *tuple = PyTuple_New(3);
-        PyTuple_SetItem(tuple, 0, PyLong_FromLong(std::get<0>($1[i])));
-        PyTuple_SetItem(tuple, 1, PyLong_FromLong(std::get<1>($1[i])));
-        PyTuple_SetItem(tuple, 2, PyLong_FromLong(std::get<2>($1[i])));
+        PyTuple_SetItem(tuple, 0, PyLong_FromLong(std::get<0>($1.at(i))));
+        PyTuple_SetItem(tuple, 1, PyLong_FromLong(std::get<1>($1.at(i))));
+        PyTuple_SetItem(tuple, 2, PyLong_FromLong(std::get<2>($1.at(i))));
         PyList_SetItem(py_list, i, tuple);
     }
     $result = py_list;
 }
 
-// Custom typemap for converting std::vector<uint64_t> to Python list
+// Typemap for converting std::vector<uint64_t> to Python list
 %typemap(out) std::vector<uint64_t> {
     PyObject *py_list = PyList_New($1.size());
     for (size_t i = 0; i < $1.size(); ++i) {
-        PyList_SetItem(py_list, i, PyLong_FromUnsignedLongLong($1[i]));
+        PyList_SetItem(py_list, i, PyLong_FromUnsignedLongLong($1.at(i)));
     }
     $result = py_list;
 }
 
-// Custom typemap for converting std::vector<QuarterCore> to Python list
+// Typemap for converting std::vector<QuarterCore> to Python list
 %typemap(out) std::vector<QuarterCore> {
     PyObject *py_list = PyList_New($1.size());
     for (size_t i = 0; i < $1.size(); ++i) {
-        PyObject *py_obj = SWIG_NewPointerObj(new QuarterCore($1[i]), SWIGTYPE_p_QuarterCore, SWIG_POINTER_OWN |  0);
+        PyObject *py_obj = SWIG_NewPointerObj(new QuarterCore($1.at(i)), SWIGTYPE_p_QuarterCore, SWIG_POINTER_OWN |  0);
         PyList_SetItem(py_list, i, py_obj);
     }
     $result = py_list;
 }
 
-// Custom typemap for converting std::vector<std::tuple<int, int, std::string>> to Python list
+// Typemap for converting std::vector<std::tuple<int, int, std::string>> to Python list
 %typemap(out) std::vector<std::tuple<int, int, std::string>> {
     PyObject *py_list = PyList_New($1.size());
     for (size_t i = 0; i < $1.size(); ++i) {
-        const auto& item = $1.at(i);
         PyObject *tuple = PyTuple_New(3);
-        PyTuple_SetItem(tuple, 0, PyLong_FromLong(std::get<0>(item)));
-        PyTuple_SetItem(tuple, 1, PyLong_FromLong(std::get<1>(item)));
-        PyTuple_SetItem(tuple, 2, PyUnicode_FromString(std::get<2>(item).c_str()));
+        PyTuple_SetItem(tuple, 0, PyLong_FromLong(std::get<0>($1.at(i))));
+        PyTuple_SetItem(tuple, 1, PyLong_FromLong(std::get<1>($1.at(i))));
+        PyTuple_SetItem(tuple, 2, PyUnicode_FromString(std::get<2>($1.at(i)).c_str()));
         PyList_SetItem(py_list, i, tuple);
     }
     $result = py_list;
 }
 
-// Custom typemap for converting std::pair<uint16_t, uint64_t> to Python tuple
+// Typemap for converting std::pair<uint16_t, uint64_t> to Python tuple
 %typemap(out) std::pair<uint16_t, uint64_t> {
     PyObject *py_tuple = PyTuple_New(2);
     PyTuple_SetItem(py_tuple, 0, PyLong_FromUnsignedLong($1.first));
@@ -79,15 +80,14 @@
     $result = py_tuple;
 }
 
-// Custom typemap for converting std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> to Python list
+// Typemap for converting std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> to Python list
 %typemap(out) std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> {
     PyObject *py_list = PyList_New($1.size());
     for (size_t i = 0; i < $1.size(); ++i) {
-        const auto& item = $1.at(i);
         PyObject *tuple = PyTuple_New(3);
-        PyTuple_SetItem(tuple, 0, PyLong_FromUnsignedLong(std::get<0>(item)));
-        PyTuple_SetItem(tuple, 1, PyLong_FromUnsignedLong(std::get<1>(item)));
-        PyTuple_SetItem(tuple, 2, PyLong_FromUnsignedLong(std::get<2>(item)));
+        PyTuple_SetItem(tuple, 0, PyLong_FromUnsignedLong(std::get<0>($1.at(i))));
+        PyTuple_SetItem(tuple, 1, PyLong_FromUnsignedLong(std::get<1>($1.at(i))));
+        PyTuple_SetItem(tuple, 2, PyLong_FromUnsignedLong(std::get<2>($1.at(i))));
         PyList_SetItem(py_list, i, tuple);
     }
     $result = py_list;

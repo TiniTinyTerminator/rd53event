@@ -15,6 +15,8 @@ if __name__ == "__main__":
         conf.chip_id = True
         conf.lcid = True
         conf.bcid = True
+        conf.drop_tot = False
+        conf.compressed_hitmap = True
         conf.size_qcore_vertical = 2
         conf.size_qcore_horizontal = 8
 
@@ -22,7 +24,7 @@ if __name__ == "__main__":
 
         qcore.set_hit_by_index(3, 12)
 
-        print(qcore.col, qcore.row, qcore.is_last, qcore.is_neighbour, qcore.is_last_in_event, qcore.serialize_qcore(False))
+        print(qcore.col, qcore.row, qcore.is_last, qcore.is_neighbour, qcore.is_last_in_event, qcore.serialize_qcore(True))
 
         print("All tests passed.")
     except AssertionError as e:

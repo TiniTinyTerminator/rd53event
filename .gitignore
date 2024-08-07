@@ -2,4 +2,4 @@ build
 .vscode
 RD53py
 lib
-./__init__.py
+__init__.py

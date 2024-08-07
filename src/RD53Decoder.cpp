@@ -3,6 +3,8 @@
 
 class RD53Decoder {
     std::vector<uint64_t> stream;
+    uint64_t bit_index = 0;
+
     const Rd53StreamConfig *config;
 
     std::vector<QuarterCore> qcores;
@@ -15,9 +17,23 @@ class RD53Decoder {
     void _get_hits();
     void _get_tots();
 
+    uint64_t _read_bits(uint8_t n_bits);
+
 public:
     RD53Decoder(const Rd53StreamConfig &config, const std::vector<uint64_t> &stream) : config(&config), stream(stream) {}
 
     void decoder();
 
 };
+
+
+// uint64_t _read_bits(uint8_t n_bits)
+// {
+    
+// }
+
+
+// void _get_col()
+// {
+
+// }

@@ -9,16 +9,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Include CMake modules
 include(CTest)
-include(UseSWIG)
-
-# Find packages
-find_package(SWIG REQUIRED)
-find_package(Python REQUIRED COMPONENTS Interpreter Development)
 
 # Set include and source directories
 set(INC ${CMAKE_SOURCE_DIR}/inc)
 set(SRC ${CMAKE_SOURCE_DIR}/src)
-include_directories(${INC} ${Python_INCLUDE_DIRS})
+
+include_directories(${INC})
 
 # Add the RD53 library
 add_library(RD53 STATIC
@@ -26,20 +22,8 @@ add_library(RD53 STATIC
     ${SRC}/RD53Decoder.cpp
 )
 
-# Set the language for SWIG and create the interface
-set(SWIG_LANGUAGE python)
-set(SWIG_INTERFACE ${CMAKE_SOURCE_DIR}/swig/RD53.i)
-set_property(SOURCE ${SWIG_INTERFACE} PROPERTY CPLUSPLUS ON)
-
-# Add SWIG module with documentation enabled
-set(CMAKE_SWIG_FLAGS -doxygen)
-swig_add_library(RD53py
-    LANGUAGE ${SWIG_LANGUAGE}
-    SOURCES ${SWIG_INTERFACE}
-            ${SRC}/RD53Event.cpp
-            ${SRC}/RD53Decoder.cpp
+set_target_properties(RD53 PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib
 )
 
-# Enable testing
-enable_testing()
-add_test(NAME PythonBindingsTest COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/test/test.py)
+add_subdirectory(python)

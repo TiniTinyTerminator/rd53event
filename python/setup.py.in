@@ -1,0 +1,44 @@
+import os
+import shutil
+import setuptools
+from setuptools.command.install import install
+
+class CompiledLibInstall(install):
+    """
+    Specialized install to install to python libs
+    """
+
+    def run(self):
+        """
+        Run method called by setup
+        :return:
+        """
+        # Run the standard install first
+        super().run()
+
+        # Get the source directory from the environment variable
+        source_dir = os.environ.get('PWD')
+
+        # Get filenames from CMake variable
+        lib_dir = os.path.join(self.install_lib, 'RD53py')
+        os.makedirs(lib_dir, exist_ok=True)
+        filenames = [
+            'RD53py.py',
+            '__init__.py',
+            '_RD53py.so',
+        ]
+
+        # Install files
+        for name in filenames:
+            shutil.copy(os.path.join(source_dir, name), lib_dir)
+
+
+if __name__ == '__main__':
+    setuptools.setup(
+        name='RD53',
+        version='0.1.0',
+        packages=[],
+        license='Apache License 2.0',
+        cmdclass={'install': CompiledLibInstall},
+        zip_safe=False,
+    )

@@ -44,7 +44,7 @@ public:
      * @param col The column index of the QuarterCore (default: 0)
      * @param row The row index of the QuarterCore (default: 0)
      */
-    QuarterCore(const Rd53StreamConfig &config, int col = 0, int row = 0);
+    QuarterCore(const Rd53StreamConfig &config, uint8_t col = 0, uint8_t row = 0);
 
     QuarterCore() = default;
 

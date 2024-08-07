@@ -1,6 +1,8 @@
 #include "RD53Event.h"
 
-QuarterCore::QuarterCore(const Rd53StreamConfig &config, int col, int row)
+#include <bitset>
+
+QuarterCore::QuarterCore(const Rd53StreamConfig &config, uint8_t col, uint8_t row)
     : config(&config), col(col), row(row), is_last(false), is_neighbour(false), is_last_in_event(false)
 {
     hits.fill(false);
@@ -224,7 +226,7 @@ std::vector<std::tuple<int, int, std::string>> QuarterCore::serialize_qcore(bool
 
     if (prev_last_in_col)
     {
-        qcore_data.push_back(std::make_tuple(6, col, std::string("col")));
+        qcore_data.push_back(std::make_tuple(6, col + 1, std::string("col")));
     }
 
     qcore_data.push_back(std::make_tuple(1, is_last, std::string("is last")));
@@ -342,47 +344,41 @@ std::vector<uint64_t> Event::serialize_event()
 {
     const int WORD_SIZE = config->chip_id ? 61 : 63;
     std::vector<uint64_t> result;
-    int current_word = 0;
-    int current_size = 0;
+    uint64_t current_word = 0;
+    uint8_t current_size = 0;
 
     auto packets = _retrieve_qcore_data();
+
     packets.insert(packets.begin(), std::make_tuple(8, event_tag, "event tag"));
 
     for (const auto &[width, word, name] : packets)
     {
-        int width_left = width;
-        int word_copy = word;
 
-        while (width_left > 0)
+        uint8_t space_left = WORD_SIZE - current_size;
+
+        if (width <= space_left)
         {
-            int space_left = WORD_SIZE - current_size;
+            current_word <<= width;
+            current_word |= word & ((1 << width) - 1);
+            current_size += width;
+        }
+        else
+        {
+            int bits_for_current_word = word >> (width - space_left);
+            current_word <<= space_left;
+            current_word |= bits_for_current_word & ((1 << space_left) - 1);
 
-            if (width_left <= space_left)
-            {
-                current_word <<= width_left;
-                current_word |= word_copy & ((1 << width_left) - 1);
-                current_size += width_left;
-                width_left = 0;
-            }
-            else
-            {
-                int bits_for_current_word = word_copy >> (width_left - space_left);
-                current_word <<= space_left;
-                current_word |= bits_for_current_word & ((1 << space_left) - 1);
-                word_copy -= bits_for_current_word << (width_left - space_left);
-                width_left -= space_left;
+            result.push_back(current_word);
 
-                result.push_back(current_size);
-                current_word = 0;
-                current_size = 0;
-            }
+            current_word = word & ((1 << (width - space_left)) - 1);
+            current_size = (width - space_left);
+        }
 
-            if (current_size == WORD_SIZE)
-            {
-                result.push_back(current_size);
-                current_word = 0;
-                current_size = 0;
-            }
+        if (current_size == WORD_SIZE)
+        {
+            result.push_back(current_word);
+            current_word = 0;
+            current_size = 0;
         }
     }
 
@@ -390,7 +386,7 @@ std::vector<uint64_t> Event::serialize_event()
     {
         int shift_amount = WORD_SIZE - current_size;
         current_word <<= shift_amount;
-        result.push_back(current_size);
+        result.push_back(current_word);
     }
 
     if (config->chip_id)

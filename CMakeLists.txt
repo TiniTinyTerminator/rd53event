@@ -27,3 +27,9 @@ set_target_properties(RD53 PROPERTIES
 )
 
 add_subdirectory(python)
+
+add_executable(test_rd53 ${CMAKE_SOURCE_DIR}/test/test.cpp)
+
+target_link_libraries(test_rd53 RD53 ${CMAKE_THREAD_LIBS_INIT})
+
+add_test(NAME test_rd53 COMMAND $<TARGET_FILE:test_rd53>)

@@ -8,10 +8,73 @@
 #include <stdexcept>
 #include <algorithm>
 #include <memory>
+#include <sstream>
+
+#include "utils.h"
 
 constexpr int N_QCORES_VERTICAL = 336 / 2;   // this is the physical number of rows quarter cores on the readout chip
 constexpr int N_QCORES_HORIZONTAL = 432 / 8; // this is the physical number of columns quarter cores on the readout chip
 
+/**
+ * @brief A type alias for a 64-bit unsigned integer
+ */
+using word_t = uint64_t;
+
+/** @brief A type alias for a pair of a 64-bit unsigned integer and an 8-bit unsigned integer */
+using DataRead = std::pair<word_t, uint8_t>;
+
+/**
+ * @brief A namespace containing constants representing the widths of different data fields in the RD53 event data stream
+ */
+namespace data_widths
+{
+    /** @brief The width of the trigger tag field */
+    constexpr uint8_t TRIGGER_TAG_WIDTH = 8;
+    /** @brief The width of the chip ID field */
+    constexpr uint8_t CHIP_ID_WIDTH = 2;
+    /** @brief The width of the column field */
+    constexpr uint8_t COL_WIDTH = 6;
+    /** @brief The width of the row field */
+    constexpr uint8_t ROW_WIDTH = 8;
+    /** @brief The width of the is_last field */
+    constexpr uint8_t IS_LAST_WIDTH = 1;
+    /** @brief The width of the is_neighbour field */
+    constexpr uint8_t IS_NEIGHBOUR_WIDTH = 1;
+    /** @brief The width of the hitmap field */
+    constexpr uint8_t HITMAP_WIDTH = 16;
+    /** @brief The width of the tot field */
+    constexpr uint8_t TOT_WIDTH = 4;
+};
+
+
+/**
+ * @brief A struct representing the header of a stream of RD53 event data
+ */
+struct StreamHeader
+{
+    /** @brief The trigger tag field */
+    uint8_t trigger_tag;
+    /** @brief The trigger position field */
+    uint8_t trigger_pos;
+    /** @brief The chip ID field */
+    uint8_t chip_id;
+    /** @brief The BCID field */
+    uint16_t bcid;
+    /** @brief The L1ID field */
+    uint16_t l1id;
+
+    std::string as_str() const
+    {
+        std::stringstream ss;
+        ss << "trigger_tag: " << static_cast<int>(trigger_tag) << ", trigger_pos: " << static_cast<int>(trigger_pos)
+           << ", chip_id: " << static_cast<int>(chip_id) << ", bcid: " << bcid << ", l1id: " << l1id;
+        return ss.str();
+    }
+};
+
+/**
+ * @brief A struct representing the configuration parameters of a stream of RD53 event data
+ */
 struct Rd53StreamConfig
 {
     int size_qcore_vertical = 4;   // this is the physical dimensons of the quarter cores on the sensor
@@ -25,6 +88,17 @@ struct Rd53StreamConfig
     bool l1id;
 
     int events_per_stream; // unused at the moment
+
+    std::string as_str() const
+    {
+        std::stringstream ss;
+        ss << "size_qcore_vertical: " << size_qcore_vertical << ", size_qcore_horizontal: " << size_qcore_horizontal
+           << ", chip_id: " << std::boolalpha << chip_id << ", drop_tot: " << std::boolalpha << drop_tot
+           << ", compressed_hitmap: " << std::boolalpha << compressed_hitmap << ", eos_marker: " << std::boolalpha
+           << eos_marker << ", bcid: " << std::boolalpha << bcid << ", l1id: " << std::boolalpha << l1id
+           << ", events_per_stream: " << events_per_stream;
+        return ss.str();
+    }
 };
 
 /**
@@ -138,7 +212,7 @@ public:
      * @param prev_last_in_col A boolean indicating whether the previous element was the last in the column
      * @return A vector of tuples containing the serialized quarter core data
      */
-    std::vector<std::tuple<int, int, std::string>> serialize_qcore(bool prev_last_in_col) const;
+    std::vector<std::tuple<uint8_t, unsigned long long, DataTags>> serialize_qcore(bool prev_last_in_col) const;
 
     /**
      * @brief Returns the index in the hit map corresponding to the specified row and column
@@ -149,39 +223,141 @@ public:
      */
     uint8_t hit_index(uint8_t row, uint8_t col) const;
 
+    /**
+     * @brief Gets the column index of the quarter core
+     *
+     * @return The column index of the quarter core
+     */
+    uint8_t get_col() const { return col_; }
+
+    /**
+     * @brief Sets the column index of the quarter core
+     *
+     * @param col The column index to be set
+     */
+    void set_col(uint8_t col)
+    {
+        if (col >= N_QCORES_HORIZONTAL)
+            throw std::runtime_error("ERROR: col index out of range");
+        col_ = col;
+    }
+
+    /**
+     * @brief Gets the row index of the quarter core
+     *
+     * @return The row index of the quarter core
+     */
+    uint8_t get_row() const { return row_; }
+
+    /**
+     * @brief Sets the row index of the quarter core
+     *
+     * @param row The row index to be set
+     */
+    void set_row(uint8_t row)
+    {
+        if (row >= N_QCORES_VERTICAL)
+            throw std::runtime_error("ERROR: row index out of range");
+        row_ = row;
+    }
+
+    /**
+     * @brief Gets a boolean indicating whether the quarter core is the last in the event
+     *
+     * @return A boolean indicating whether the quarter core is the last in the event
+     */
+    bool get_is_last() const { return is_last_; }
+
+    /**
+     * @brief Sets a boolean indicating whether the quarter core is the last in the event
+     *
+     * @param is_last The boolean indicating whether the quarter core is the last in the event
+     */
+    void set_is_last(bool is_last) { is_last_ = is_last; }
+
+    /**
+     * @brief Gets a boolean indicating whether the quarter core is a neighbour
+     *
+     * @return A boolean indicating whether the quarter core is a neighbour
+     */
+    bool get_is_neighbour() const { return is_neighbour_; }
+
+    /**
+     * @brief Sets a boolean indicating whether the quarter core is a neighbour
+     *
+     * @param is_neighbour The boolean indicating whether the quarter core is a neighbour
+     */
+    void set_is_neighbour(bool is_neighbour) { is_neighbour_ = is_neighbour; }
+
+    /**
+     * @brief Gets a boolean indicating whether the quarter core is the last in the row
+     *
+     * @return A boolean indicating whether the quarter core is the last in the row
+     */
+    bool get_is_last_in_event() const { return is_last_in_event_; }
+
+    /**
+     * @brief Sets a boolean indicating whether the quarter core is the last in the row
+     *
+     * @param is_last_in_event The boolean indicating whether the quarter core is the last in the row
+     *
+     * @param is_last_in_event The boolean indicating whether the quarter core is the last in the row
+     */
+    void set_is_last_in_event(bool is_last_in_event) { is_last_in_event_ = is_last_in_event; }
+
+    /**
+     * @brief Sets the Rd53StreamConfig object
+     *
+     * @param config The Rd53StreamConfig object
+     */
+    void set_config(const Rd53StreamConfig &config) { this->config = &config; }
+
+    /**
+     * @brief Gets the Rd53StreamConfig object
+     *
+     * @return The Rd53StreamConfig object
+     */
+    Rd53StreamConfig get_config() const { return *config; }
+
+    /**
+     * @brief Returns a string representation of the QuarterCore object
+     *
+     * @return A string representation of the QuarterCore object
+     */
+    std::string as_str() const;
+
+private:
     // Member variables
     /** The Rd53StreamConfig object that contains the configuration parameters */
     const Rd53StreamConfig *config;
     /** The column index of the quarter core */
-    uint8_t col;
+    uint8_t col_;
     /** The row index of the quarter core */
-    uint8_t row;
+    uint8_t row_;
     /** A boolean indicating whether the quarter core is the last in the event */
-    bool is_last;
+    bool is_last_;
     /** A boolean indicating whether the quarter core is a neighbour */
-    bool is_neighbour;
+    bool is_neighbour_;
     /** A boolean indicating whether the quarter core is the last in the row */
-    bool is_last_in_event;
-
-private:
+    bool is_last_in_event_;
     /** The hit map representing the hits in the quarter core */
-    std::array<bool, 16> hits;
+    uint16_t hits_;
     /** The total values of the hits in the quarter core */
-    std::array<uint8_t, 16> tots;
+    uint64_t tots_;
 };
 
 /**
- * @brief Represents an Event object
+ * @brief Represents an RD53Event object
  *
- * The Event class represents an event in a RD64 detector. It contains
+ * The RD53Event class represents an event in a RD53 detector. It contains
  * information about the hits in the event and provides methods to get and set
  * these hits.
  */
-class Event
+class RD53Event
 {
 public:
     /**
-     * @brief Constructs an Event object
+     * @brief Constructs an RD53Event object
      *
      * @param config The Rd53StreamConfig object that contains the configuration parameters
      * @param hits The vector of hits in the event
@@ -190,23 +366,16 @@ public:
      * @param lcid The local chamber ID (default: 0)
      * @param bcid The board chamber ID (default: 0)
      */
-    Event(const Rd53StreamConfig &config, const std::vector<std::tuple<int, int, int>> &hits,
-          int event_tag = 0, int chip_id = 0, int lcid = 0, int bcid = 0);
+    RD53Event(const Rd53StreamConfig &config, const StreamHeader &header, const std::vector<std::tuple<int, int, int>> &hits);
 
     /**
-     * @brief Retrieves the quarter cores in the event
+     * @brief Constructs an RD53Event object
      *
-     * This function retrieves the quarter cores in the event by calling the
-     * get_quarter_cores() method of each QuarterCore object in the qcores vector.
+     * @param config The Rd53StreamConfig object that contains the configuration parameters
+     * @param header The StreamHeader object that contains the header of the event
+     * @param qcores The vector of QuarterCore objects that contain the hits in the event
      */
-    void get_quarter_cores();
-
-    // /**
-    //  * @brief Set the quarter cores in the event
-    //  *
-    //  * @param qcores The vector of QuarterCore objects to set
-    //  */
-    // void set_quarter_cores(const std::vector<QuarterCore> &qcores);
+    RD53Event(const Rd53StreamConfig &config, const StreamHeader &header, std::vector<QuarterCore> &qcores);
 
     /**
      * @brief Serializes the event data into a vector of 64-bit integers
@@ -216,32 +385,210 @@ public:
     std::vector<uint64_t> serialize_event();
 
     /** The Rd53StreamConfig object that contains the configuration parameters */
-    const Rd53StreamConfig *config;
+    const Rd53StreamConfig config;
+
+    /** The event header */
+    const StreamHeader header;
+
+    /**
+     * Retrieves the vector of QuarterCore objects representing the quarter cores in the event.
+     *
+     * @return The vector of QuarterCore objects.
+     *
+     * @throws None
+     */
+    std::vector<QuarterCore> get_qcores()
+    {
+        if (qcores.empty())
+            _get_qcores_from_pixelframe();
+        return qcores;
+    }
+
+    /**
+     * Retrieves the vector of hits in the event.
+     *
+     * @return The vector of hits in the event.
+     *
+     * @throws None
+     */
+    std::vector<std::tuple<int, int, int>> get_hits()
+    {
+        if (hits.empty())
+            _get_pixelframe_from_qcores();
+        return hits;
+    }
+
+    /**
+     * @brief Create a string from the data of this class
+     *
+     * @return A string containing the data of this class
+     */
+    std::string as_str();
+
+private:
     /** The vector of hits in the event */
     std::vector<std::tuple<int, int, int>> hits;
-    /** The event tag */
-    int event_tag;
-    /** The chip ID */
-    int chip_id;
-    /** The l1 trigger ID */
-    int lcid;
-    /** The bunch crossing ID */
-    int bcid;
+
     /** The vector of QuarterCore objects representing the quarter cores in the event */
     std::vector<QuarterCore> qcores;
 
-private:
     /**
      * @brief Retrieves the quarter core data in the event
      *
      * @return A vector of tuples containing the serialized quarter core data
      */
-    std::vector<std::tuple<int, int, std::string>> _retrieve_qcore_data();
+    std::vector<std::tuple<uint8_t, unsigned long long, DataTags>> _retrieve_qcore_data();
+
+    /**
+     * @brief Retrieves the quarter cores in the event
+     *
+     * This function retrieves the quarter cores in the event by calling the
+     * _get_qcores_from_pixelframe() method of each QuarterCore object in the qcores vector.
+     */
+    void _get_qcores_from_pixelframe();
+
+    /**
+     * @brief Retrieves the pixel frame in the event
+     *
+     * This function retrieves the pixel frame in the event by calling the
+     * _get_pixelframe_from_qcores() method of each QuarterCore object in the qcores vector.
+     */
+    void _get_pixelframe_from_qcores();
 };
 
 /**
- * @brief Prints "Hello World!" to the console
+ * @brief A class for decoding streams of RD53 event data
  */
-void say_hello_world(std::string);
+class RD53Decoder
+{
+public:
+    /**
+     * @brief Constructs a new RD53Decoder object
+     *
+     * @param config The Rd53StreamConfig object containing the configuration parameters
+     * @param words The vector of 64-bit unsigned integers containing the event data stream
+     */
+    RD53Decoder(const Rd53StreamConfig &config, std::vector<word_t> &words);
+
+    /**
+     * @brief Decodes the event data stream
+     */
+    void process_stream();
+
+    std::vector<RD53Event> get_events() const;
+
+
+private:
+    /**
+     * @brief Validates the chip ID field
+     */
+    void
+    _validate_chip_id();
+
+    /**
+     * @brief Gets the trigger IDs from the event data stream
+     */
+    void _get_trigger_ids();
+
+    /**
+     * @brief Gets the trigger tag from the event data stream
+     */
+    void _get_trigger_tag();
+
+    /**
+     * @brief Gets the column index from the event data stream
+     */
+    void _get_col();
+
+    /**
+     * @brief Gets the is_neighbour and is_last fields from the event data stream
+     */
+    void _get_neighbour_and_last();
+
+    /**
+     * @brief Gets the row index from the event data stream
+     */
+    void _get_row();
+
+    /**
+     * @brief Gets the hitmap and tot fields from the event data stream
+     */
+    void _get_hitmap();
+
+    /**
+     * @brief Calculates the tot value from the number of hits
+     *
+     * @param n_hits The number of hits
+     * @return The tot value
+     */
+    uint64_t _get_tots(uint16_t n_hits);
+
+    /**
+     * @brief Shifts the bit index of the event data stream
+     *
+     * @param bit_index The new bit index
+     * @param remove_start Whether to remove the start bit
+     * @return The shifted value
+     */
+    inline word_t _shift_stream(size_t bit_index);
+
+    /**
+     * @brief Gets the specified number of bits from the event data stream
+     *
+     * @param n_bits The number of bits to get
+     * @param increment Whether to increment the bit index
+     * @return The bits as a 64-bit unsigned integer
+     */
+    inline word_t _get_nbits(uint8_t n_bits, bool increment = true);
+
+    /**
+     * @brief Indicates the start of a new event
+     */
+    inline void _new_event();
+
+    /** @brief The bit index of the event data stream */
+    /**
+     * @brief The bit index of the event data stream
+     */
+    size_t bit_index;
+
+    /**
+     * @brief The jump size of the event data stream
+     */
+    size_t jump_size;
+
+    /**
+     * @brief The size of a word in bits
+     */
+    uint8_t word_size;
+
+    /**
+     * @brief The size of the meta data in bits
+     */
+    uint8_t word_meta_size;
+
+    /** @brief The event data stream */
+    std::vector<word_t> stream;
+
+    /** @brief The Rd53StreamConfig object containing the configuration parameters */
+    const Rd53StreamConfig config;
+
+    /** @brief The vector of pairs representing the events in the event data stream */
+    using EventVec = std::vector<std::pair<StreamHeader, std::vector<QuarterCore>>>;
+
+    /** @brief The vector of pairs representing the events in the event data stream */
+    EventVec events;
+
+    /** @brief An iterator pointing to the current event in the events vector */
+    EventVec::iterator current_event;
+
+    /** @brief A pointer to the header of the current event */
+    StreamHeader *current_header;
+
+    /** @brief A pointer to the vector of QuarterCore objects of the current event */
+    std::vector<QuarterCore> *current_qcores;
+
+    QuarterCore qc;
+};
 
 #endif // RD53EVENT_H

@@ -9,7 +9,7 @@
 %include "std_array.i"
 // %include "std_vector.i"
 // %include "std_pair.i"
-%include "inttypes.i"
+%include "stdint.i"
 
 // Typemap for converting std::vector<std::vector<std::pair<bool, uint8_t>>> to Python list
 %typemap(out) std::vector<std::vector<std::pair<bool, uint8_t>>> {
@@ -60,12 +60,12 @@
 }
 
 // Typemap for converting std::vector<std::tuple<int, int, std::string>> to Python list
-%typemap(out) std::vector<std::tuple<int, int, std::string>> {
+%typemap(out) std::vector<std::tuple<uint8_t, uint64_t, std::string>> {
     PyObject *py_list = PyList_New($1.size());
     for (size_t i = 0; i < $1.size(); ++i) {
         PyObject *tuple = PyTuple_New(3);
-        PyTuple_SetItem(tuple, 0, PyLong_FromLong(std::get<0>($1.at(i))));
-        PyTuple_SetItem(tuple, 1, PyLong_FromLong(std::get<1>($1.at(i))));
+        PyTuple_SetItem(tuple, 0, PyLong_FromUnsignedLong(std::get<0>($1.at(i))));
+        PyTuple_SetItem(tuple, 1, PyLong_FromUnsignedLongLong(std::get<1>($1.at(i))));
         PyTuple_SetItem(tuple, 2, PyUnicode_FromString(std::get<2>($1.at(i)).c_str()));
         PyList_SetItem(py_list, i, tuple);
     }

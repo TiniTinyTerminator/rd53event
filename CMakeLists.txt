@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.20)
 
 # Set the project name
 project(RD53)
@@ -18,8 +18,10 @@ include_directories(${INC})
 
 # Add the RD53 library
 add_library(RD53 STATIC
-    ${SRC}/RD53Event.cpp
-    ${SRC}/RD53Decoder.cpp
+    ${SRC}/Quartercore.cpp
+    ${SRC}/Event.cpp
+    ${SRC}/Decoder.cpp
+    ${SRC}/utils.cpp
 )
 
 set_target_properties(RD53 PROPERTIES

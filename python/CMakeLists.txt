@@ -15,10 +15,11 @@ set(CMAKE_SWIG_FLAGS -doxygen)
 
 swig_add_library(RD53py
     TYPE SHARED
-    LANGUAGE ${SWIG_LANGUAGE}
-    SOURCES ${SWIG_INTERFACE}
-            ${SRC}/RD53Event.cpp
-            ${SRC}/RD53Decoder.cpp
+    LANGUAGE    ${SWIG_LANGUAGE}
+    SOURCES     ${SWIG_INTERFACE}
+                ${SRC}/Quartercore.cpp
+                ${SRC}/Event.cpp
+                ${SRC}/Decoder.cpp
     OUTFILE_DIR ${CMAKE_BINARY_DIR}/wrappers
 )
 

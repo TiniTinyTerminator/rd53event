@@ -2,7 +2,10 @@
 %module RD53py
 
 %{
-#include "RD53Event.h"
+    // #include <vector>
+    #include "RD53Event.h"
+
+    using word_t = unsigned long long;
 %}
 
 %include "std_string.i"
@@ -91,6 +94,42 @@
         PyList_SetItem(py_list, i, tuple);
     }
     $result = py_list;
+}
+
+// Typemap for converting Python list to std::vector<word_t>
+%typemap(in) std::vector<word_t> {
+    PyObject *obj = $input;
+    if (!PyList_Check(obj)) {
+        SWIG_exception_fail(SWIG_TypeError, "Expected a Python list");
+    }
+    Py_ssize_t size = PyList_Size(obj);
+    std::vector<word_t>* vec = new std::vector<word_t>();
+    vec->reserve(size);
+    for (Py_ssize_t i = 0; i < size; ++i) {
+        PyObject *item = PyList_GetItem(obj, i);
+        word_t temp;
+        if (!SWIG_ConvertPtr(item, (void **)&temp, SWIGTYPE_p_word_t, 0)) {
+            vec->push_back(temp);
+        } else {
+            SWIG_exception_fail(SWIG_TypeError, "Failed to convert list item to word_t");
+        }
+    }
+    $1 = vec;
+}
+
+// Typemap for converting std::vector<word_t> to Python list
+%typemap(out) std::vector<word_t> {
+    PyObject* pylist = PyList_New($1.size());
+    for (size_t i = 0; i < $1.size(); ++i) {
+        PyObject* item = SWIG_NewPointerObj((void *) &($1.data()[i]), SWIGTYPE_p_unsigned_long_long, 0);
+        PyList_SetItem(pylist, i, item);
+    }
+    $result = pylist;
+}
+
+// Typemap to clean up the vector after passing it from Python to C++
+%typemap(freearg) std::vector<word_t> * {
+    delete $1;
 }
 
 // Handle overloaded methods

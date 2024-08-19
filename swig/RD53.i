@@ -5,7 +5,6 @@
     // #include <vector>
     #include "RD53Event.h"
 
-    using word_t = unsigned long long;
 %}
 
 %include "std_string.i"
@@ -96,27 +95,29 @@
     $result = py_list;
 }
 
-// Typemap for converting Python list to std::vector<word_t>&
-%typemap(in) std::vector<word_t>& (std::vector<word_t>* temp) {
-    PyObject *obj = $input;
-    if (!PyList_Check(obj)) {
-        SWIG_exception_fail(SWIG_TypeError, "Expected a Python list");
-    }
-    Py_ssize_t size = PyList_Size(obj);
-    temp = new std::vector<word_t>();
-    temp->reserve(size);
-    for (Py_ssize_t i = 0; i < size; ++i) {
-        PyObject *item = PyList_GetItem(obj, i);
-        word_t temp_item;
-        if (SWIG_ConvertPtr(item, (void **)&temp_item, SWIGTYPE_p_unsigned_long_long, 0) == -1) {
-            delete temp;
-            SWIG_exception_fail(SWIG_TypeError, "Failed to convert list item to word_t");
-        }
-        temp->push_back(temp_item);
-    }
-    $1 = temp;
-}
+// Define the typemap for converting Python list to std::vector<long long>
+%typemap(in) std::vector<word_t> & (std::vector<word_t> * vec ){
+    PyObject *seq = PySequence_Fast($input, "Expected a sequence");
+    if (!seq) SWIG_fail;
+    
+    Py_ssize_t len = PySequence_Size(seq);
 
+    vec = new std::vector<word_t>();
+
+    for (Py_ssize_t i = 0; i < len; ++i) {
+        PyObject *item = PySequence_GetItem(seq, i);
+        word_t value = (word_t)PyLong_AsUnsignedLongLong(item);
+        if (PyErr_Occurred()) {
+            Py_DECREF(seq);
+            SWIG_fail;
+        }
+        vec->push_back(value);
+    }
+
+    $1 = vec;
+
+    Py_DECREF(seq);
+}
 
 // Typemap for converting std::vector<word_t> to Python list
 %typemap(out) std::vector<word_t> {
@@ -128,10 +129,11 @@
     $result = pylist;
 }
 
-// Typemap to clean up the vector after passing it from Python to C++
-%typemap(freearg) std::vector<word_t> * {
+// Typemap to clean up the temporary std::vector after it has been used
+%typemap(freearg) std::vector<word_t>& {
     delete $1;
 }
+
 
 // Handle overloaded methods
 %rename(get_hit_by_coordinates) QuarterCore::get_hit(uint8_t, uint8_t) const;

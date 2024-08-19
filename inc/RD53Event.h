@@ -46,7 +46,6 @@ namespace data_widths
     constexpr uint8_t TOT_WIDTH = 4;
 };
 
-
 /**
  * @brief A struct representing the header of a stream of RD53 event data
  */
@@ -477,13 +476,11 @@ public:
 
     std::vector<RD53Event> get_events() const;
 
-
 private:
     /**
      * @brief Validates the chip ID field
      */
-    void
-    _validate_chip_id();
+    void _validate_chip_id();
 
     /**
      * @brief Gets the trigger IDs from the event data stream

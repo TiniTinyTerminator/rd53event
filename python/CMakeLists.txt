@@ -20,6 +20,7 @@ swig_add_library(RD53py
                 ${SRC}/Quartercore.cpp
                 ${SRC}/Event.cpp
                 ${SRC}/Decoder.cpp
+                ${SRC}/utils.cpp
     OUTFILE_DIR ${CMAKE_BINARY_DIR}/wrappers
 )
 

@@ -7,9 +7,6 @@ import RD53py
 
 if __name__ == "__main__":
     try:
-
-        RD53py.say_hello_world("YEEET")
-
         conf = RD53py.Rd53StreamConfig()
 
         conf.chip_id = True
@@ -24,7 +21,7 @@ if __name__ == "__main__":
 
         qcore.set_hit_by_index(3, 12)
 
-        print(qcore.col, qcore.row, qcore.is_last, qcore.is_neighbour, qcore.is_last_in_event, qcore.serialize_qcore(True))
+        print(qcore.get_col(), qcore.get_row, qcore.get_is_last(), qcore.get_is_neighbour(), qcore.get_is_last_in_event(), qcore.serialize_qcore(True))
 
         print("All tests passed.")
     except AssertionError as e:

@@ -17,6 +17,14 @@ RD53Event::RD53Event(const Rd53StreamConfig &config, const StreamHeader &header,
     }
 }
 
+RD53Event::RD53Event(const RD53Event &other) : config(other.config), header(other.header), hits(other.hits), qcores(other.qcores)
+{
+    for (auto &qcore : qcores)
+    {
+        qcore.set_config(config);
+    }
+}
+
 void RD53Event::_get_qcores_from_pixelframe()
 {
     if (!qcores.empty())
@@ -132,7 +140,7 @@ std::vector<word_t> RD53Event::serialize_event()
 
         if (s >= WORD_SIZE)
         {
-            std::cout << set_color(data_tag_colors[name]) << bits.substr(0, width - (s - WORD_SIZE)) << fgc[Color::RESET] << bgc[Color::RESET] <<std::endl
+            std::cout << set_color(data_tag_colors[name]) << bits.substr(0, width - (s - WORD_SIZE)) << fgc[Color::RESET] << bgc[Color::RESET] << std::endl
                       << set_color(data_tag_colors[name]) << bits.substr(width - (s - WORD_SIZE));
 
             s -= WORD_SIZE;
@@ -146,7 +154,6 @@ std::vector<word_t> RD53Event::serialize_event()
 
     for (const auto &[width, word, name] : packets)
     {
-
 
         uint8_t space_left = WORD_SIZE - current_size;
 
@@ -169,12 +176,10 @@ std::vector<word_t> RD53Event::serialize_event()
             current_word <<= space_left;
             current_word |= bits_for_current_word & ((1 << space_left) - 1);
 
-
             result.push_back(current_word);
 
             current_word = word & ((1 << (width - space_left)) - 1);
             current_size = (width - space_left);
-
         }
     }
 

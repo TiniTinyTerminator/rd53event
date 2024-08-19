@@ -130,10 +130,56 @@
 }
 
 // Typemap to clean up the temporary std::vector after it has been used
-%typemap(freearg) std::vector<word_t>& {
+%typemap(freearg) std::vector<word_t>* {
     delete $1;
 }
 
+%typemap(out) std::vector<RD53Event> {
+    $result = PyList_New($1.size());
+    for (size_t i = 0; i < $1.size(); ++i) {
+        PyList_SetItem($result, i, SWIG_NewPointerObj(new RD53Event($1.at(i)), SWIGTYPE_p_RD53Event, SWIG_POINTER_OWN));
+    }
+}
+
+%extend QuarterCore {
+    std::string __str__() const {
+         return $self->as_str();
+    }
+
+    std::string __repr__() const {
+         return $self->as_str();
+    }
+}
+
+%extend RD53Event {
+    std::string __str__() {
+         return $self->as_str();
+    }
+
+    std::string __repr__() {
+         return $self->as_str();
+    }
+}
+
+%extend StreamHeader {
+    std::string __str__() const {
+         return $self->as_str();
+    }
+
+    std::string __repr__() const {
+         return $self->as_str();
+    }
+}
+
+%extend Rd53StreamConfig {
+    std::string __str__() const {
+         return $self->as_str();
+    }
+
+    std::string __repr__() const {
+         return $self->as_str();
+    }
+}
 
 // Handle overloaded methods
 %rename(get_hit_by_coordinates) QuarterCore::get_hit(uint8_t, uint8_t) const;

@@ -3,4 +3,4 @@ build
 RD53py
 lib
 __init__.py
-*/__pycache__
+__pycache__

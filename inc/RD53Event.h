@@ -12,6 +12,8 @@
 
 #include "utils.h"
 
+constexpr bool DEBUG = false;
+
 constexpr int N_QCORES_VERTICAL = 336 / 2;   // this is the physical number of rows quarter cores on the readout chip
 constexpr int N_QCORES_HORIZONTAL = 432 / 8; // this is the physical number of columns quarter cores on the readout chip
 
@@ -355,6 +357,8 @@ private:
 class RD53Event
 {
 public:
+    RD53Event(const RD53Event &other);
+
     /**
      * @brief Constructs an RD53Event object
      *

@@ -20,7 +20,7 @@ inline std::pair<uint8_t, uint8_t> decode_bitpair(uint8_t bits)
     if ((bits & 1) == 0)
         return {1, 1};
 
-    return {2 | ((bits >> 1) & 1), 2};
+    return {bits, 2};
 }
 
 /**
@@ -87,26 +87,29 @@ word_t RD53Decoder::_shift_stream(size_t bit_index)
 
     word_t full_word = first_word | second_word;
 
-    std::string word_str = std::bitset<64>(full_word).to_string().erase(0, word_meta_size);
-    std::string first_word_str(word_str, 0, word_size - bit_offset);
-    std::string second_word_str(word_str, word_size - bit_offset, word_size);
-
-    std::stringstream ss;
-
-    ss << fgc[Color::CYAN] << first_word_str << fgc[Color::GREEN] << second_word_str << fgc[Color::RESET] << "  " << jump_size << " " << bit_index << " " << state;
-
-    auto str = ss.str();
-
-    if (jump_size > 0)
+    if (DEBUG)
     {
-        const auto first_bracket = std::string(bgc[Color::BRIGHT_GREEN]);
-        const auto second_bracket = std::string(bgc[Color::RESET]);
+        std::string word_str = std::bitset<64>(full_word).to_string().erase(0, word_meta_size);
+        std::string first_word_str(word_str, 0, word_size - bit_offset);
+        std::string second_word_str(word_str, word_size - bit_offset, word_size);
 
-        str.insert(fgc[Color::CYAN].size(), first_bracket);
-        str.insert(jump_size + fgc[Color::CYAN].size() + first_bracket.size(), second_bracket);
+        std::stringstream ss;
+
+        ss << fgc[Color::CYAN] << first_word_str << fgc[Color::GREEN] << second_word_str << fgc[Color::RESET] << "  " << jump_size << " " << bit_index << " " << state;
+
+        auto str = ss.str();
+
+        if (jump_size > 0)
+        {
+            const auto first_bracket = std::string(bgc[Color::BRIGHT_GREEN]);
+            const auto second_bracket = std::string(bgc[Color::RESET]);
+
+            str.insert(fgc[Color::CYAN].size(), first_bracket);
+            str.insert(jump_size + fgc[Color::CYAN].size() + first_bracket.size(), second_bracket);
+        }
+
+        std::cout << str << std::endl;
     }
-
-    std::cout << str << std::endl;
 
     return full_word;
 }
@@ -149,7 +152,8 @@ void RD53Decoder::_get_trigger_tag()
     current_header->trigger_tag = tag >> 2;
     current_header->trigger_pos = tag & 0b11;
 
-    std::cout << "Trigger tag: " << static_cast<int>(current_header->trigger_tag) << ", pos: " << static_cast<int>(current_header->trigger_pos) << std::endl;
+    if (DEBUG)
+        std::cout << "Trigger tag: " << static_cast<int>(current_header->trigger_tag) << ", pos: " << static_cast<int>(current_header->trigger_pos) << std::endl;
 
     if ((config.l1id || config.bcid) && current_event == events.begin())
         _get_trigger_ids();
@@ -179,7 +183,8 @@ void RD53Decoder::_get_trigger_ids()
         break;
     }
 
-    std::cout << "ids: " << current_header->bcid << " " << current_header->l1id << std::endl;
+    if (DEBUG)
+        std::cout << "ids: " << current_header->bcid << " " << current_header->l1id << std::endl;
 }
 
 void RD53Decoder::_get_col()
@@ -188,7 +193,8 @@ void RD53Decoder::_get_col()
 
     uint8_t col = _get_nbits(data_widths::COL_WIDTH);
 
-    std::cout << "col: " << static_cast<int>(col) << std::endl;
+    if (DEBUG)
+        std::cout << "col: " << static_cast<int>(col) << std::endl;
 
     if (col == 0)
     {
@@ -225,13 +231,15 @@ void RD53Decoder::_get_neighbour_and_last()
 
     qc.set_is_neighbour(_get_nbits(1));
 
-    std::cout << "is_neighbour: " << static_cast<int>(qc.get_is_neighbour()) << " is_last: " << static_cast<int>(qc.get_is_last()) << std::endl;
+    if (DEBUG)
+        std::cout << "is_neighbour: " << static_cast<int>(qc.get_is_neighbour()) << " is_last: " << static_cast<int>(qc.get_is_last()) << std::endl;
 
     if (qc.get_is_neighbour())
     {
         qc.set_row(qc.get_row() + 1);
 
-        std::cout << "row: " << qc.get_row() << std::endl;
+        if (DEBUG)
+            std::cout << "row: " << qc.get_row() << std::endl;
 
         _get_hitmap();
     }
@@ -244,7 +252,9 @@ void RD53Decoder::_get_row()
     state = DataTags::ROW;
 
     uint8_t row = _get_nbits(data_widths::ROW_WIDTH);
-    std::cout << "row: " << (uint32_t)row << std::endl;
+
+    if (DEBUG)
+        std::cout << "row: " << (uint32_t)row << std::endl;
 
     qc.set_row(row);
 
@@ -271,7 +281,7 @@ void RD53Decoder::_get_hitmap()
 
             if (row_mask & (2 >> i))
             {
-                 auto [quad_mask, read_bits] = decode_bitpair(_get_nbits(2, false));
+                auto [quad_mask, read_bits] = decode_bitpair(_get_nbits(2, false));
                 bit_index += read_bits;
                 jump_size = read_bits;
 
@@ -279,7 +289,7 @@ void RD53Decoder::_get_hitmap()
 
                 for (size_t j = 0; j < count_set_bits(quad_mask); j++)
                 {
-                    auto [pair_mask, read_bits]  = decode_bitpair(_get_nbits(2, false));
+                    auto [pair_mask, read_bits] = decode_bitpair(_get_nbits(2, false));
                     bit_index += read_bits;
                     jump_size = read_bits;
 
@@ -317,7 +327,8 @@ void RD53Decoder::_get_hitmap()
 
     qc.set_hit_raw(hit_raw, tots_raw);
 
-    std::cout << "HITS_RAW: " << static_cast<unsigned int>(hit_raw) << " TOTS_RAW: " << static_cast<unsigned long long>(tots_raw) << std::endl;
+    if (DEBUG)
+        std::cout << "HITS_RAW: " << std::bitset<16>(hit_raw) << " TOTS_RAW: " << std::bitset<64>(tots_raw) << std::endl;
 
     current_qcores->push_back(qc);
 

@@ -7,8 +7,8 @@
 
 %include "std_string.i"
 %include "std_array.i"
-// %include "std_vector.i"
-// %include "std_pair.i"
+%include "std_vector.i"
+%include "std_pair.i"
 %include "stdint.i"
 
 // Typemap for converting std::vector<std::vector<std::pair<bool, uint8_t>>> to Python list

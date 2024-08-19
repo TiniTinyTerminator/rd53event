@@ -94,7 +94,7 @@ void RD53Event::_get_pixelframe_from_qcores()
     }
 }
 
-std::vector<uint64_t> RD53Event::serialize_event()
+std::vector<word_t> RD53Event::serialize_event()
 {
     if (qcores.empty())
         _get_qcores_from_pixelframe();
@@ -102,8 +102,8 @@ std::vector<uint64_t> RD53Event::serialize_event()
     auto packets = _retrieve_qcore_data();
 
     const uint8_t WORD_SIZE = config.chip_id ? 61 : 63;
-    std::vector<uint64_t> result;
-    uint64_t current_word = 0;
+    std::vector<word_t> result;
+    word_t current_word = 0;
     uint8_t current_size = 0;
 
     packets.insert(packets.begin(), std::make_tuple(8, (header.trigger_tag << 2) | (header.trigger_pos & 0b11), DataTags::TRIGGER_TAG));

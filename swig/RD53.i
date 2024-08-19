@@ -96,26 +96,27 @@
     $result = py_list;
 }
 
-// Typemap for converting Python list to std::vector<word_t>
-%typemap(in) std::vector<word_t> {
+// Typemap for converting Python list to std::vector<word_t>&
+%typemap(in) std::vector<word_t>& (std::vector<word_t>* temp) {
     PyObject *obj = $input;
     if (!PyList_Check(obj)) {
         SWIG_exception_fail(SWIG_TypeError, "Expected a Python list");
     }
     Py_ssize_t size = PyList_Size(obj);
-    std::vector<word_t>* vec = new std::vector<word_t>();
-    vec->reserve(size);
+    temp = new std::vector<word_t>();
+    temp->reserve(size);
     for (Py_ssize_t i = 0; i < size; ++i) {
         PyObject *item = PyList_GetItem(obj, i);
-        word_t temp;
-        if (!SWIG_ConvertPtr(item, (void **)&temp, SWIGTYPE_p_word_t, 0)) {
-            vec->push_back(temp);
-        } else {
+        word_t temp_item;
+        if (SWIG_ConvertPtr(item, (void **)&temp_item, SWIGTYPE_p_unsigned_long_long, 0) == -1) {
+            delete temp;
             SWIG_exception_fail(SWIG_TypeError, "Failed to convert list item to word_t");
         }
+        temp->push_back(temp_item);
     }
-    $1 = vec;
+    $1 = temp;
 }
+
 
 // Typemap for converting std::vector<word_t> to Python list
 %typemap(out) std::vector<word_t> {

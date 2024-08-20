@@ -18,7 +18,7 @@ constexpr auto BITS_PER_WORD = std::numeric_limits<word_t>::digits;
 inline std::pair<uint8_t, uint8_t> decode_bitpair(uint8_t bits)
 {
     bits &= 0b11;
-    
+
     if (((bits >> 1) & 0b1) == 0)
         return {1, 1};
 
@@ -266,7 +266,8 @@ void RD53Decoder::_get_hitmap()
         state = DataTags::S1;
         auto [s1, read_bits] = decode_bitpair(_get_nbits(2, false));
 
-        std::cout << std::bitset<2>(s1) << std::endl;
+        if (DEBUG)
+            std::cout << std::bitset<2>(s1) << std::endl;
 
         bit_index += read_bits;
 
@@ -278,7 +279,8 @@ void RD53Decoder::_get_hitmap()
             state = DataTags::S2;
             auto [s2, read_bits] = decode_bitpair(_get_nbits(2, false));
 
-            std::cout << std::bitset<2>(s2) << std::endl;
+            if (DEBUG)
+                std::cout << std::bitset<2>(s2) << std::endl;
 
             bit_index += read_bits;
 
@@ -292,7 +294,8 @@ void RD53Decoder::_get_hitmap()
                 state = DataTags::S3;
                 auto [s3, read_bits] = decode_bitpair(_get_nbits(2, false));
 
-                std::cout << std::bitset<2>(s3) << std::endl;
+                if (DEBUG)
+                    std::cout << std::bitset<2>(s3) << std::endl;
 
                 bit_index += read_bits;
 
@@ -314,7 +317,8 @@ void RD53Decoder::_get_hitmap()
                     state = DataTags::HITPAIR;
                     auto [hitpair, read_bits] = decode_bitpair(_get_nbits(2, false));
 
-                    std::cout << std::bitset<2>(hitpair) << std::endl;
+                    if (DEBUG)
+                        std::cout << std::bitset<2>(hitpair) << std::endl;
 
                     hit_raw |= (((hitpair & 0b01) << 1) | ((hitpair & 0b10) >> 1)) << j * 4 + k * 2 + i * 8;
 
@@ -323,7 +327,6 @@ void RD53Decoder::_get_hitmap()
 
                 current_s3++;
             }
-
         }
     }
     else
@@ -385,8 +388,12 @@ std::vector<RD53Event> RD53Decoder::get_events() const
 {
     std::vector<RD53Event> processed_events;
 
+    uint32_t i = 0;
+
     for (auto [header, qcores] : events)
     {
+
+        std::cout << i++ << std::endl;
         processed_events.push_back(RD53Event(config, header, qcores));
     }
 

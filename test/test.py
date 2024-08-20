@@ -10,7 +10,7 @@ if __name__ == "__main__":
         conf = RD53py.Rd53StreamConfig()
 
         conf.chip_id = True
-        conf.lcid = True
+        conf.l1id = True
         conf.bcid = True
         conf.drop_tot = False
         conf.compressed_hitmap = True

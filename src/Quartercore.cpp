@@ -1,6 +1,7 @@
 #include "RD53Event.h"
 
 #include <bitset>
+#include <iomanip>
 
 QuarterCore::QuarterCore(const Rd53StreamConfig &config, uint8_t col, uint8_t row)
     : config(&config), col_(col), row_(row), is_last_(false), is_neighbour_(false), is_last_in_event_(false), hits_(0), tots_(0)
@@ -97,8 +98,8 @@ std::pair<int, int> QuarterCore::get_binary_tree() const
         int quarter_id = (pair_id - (pair_id % 2)) / 2;
         int half_id = (quarter_id - (quarter_id % 2)) / 2;
 
-        bool hit_bottom = hits_ >> ((8-pair_id)*2-1) & 0x1;
-        bool hit_top = hits_ >> ((8-pair_id)*2-2) & 0x1;
+        bool hit_bottom = hits_ >> ((8 - pair_id) * 2 - 1) & 0x1;
+        bool hit_top = hits_ >> ((8 - pair_id) * 2 - 2) & 0x1;
 
         pair_hitor[pair_id] = hit_top || hit_bottom;
 
@@ -227,7 +228,7 @@ std::vector<std::tuple<uint8_t, unsigned long long, DataTags>> QuarterCore::seri
 
             if (hit.first)
             {
-                
+
                 qcore_data.push_back(std::make_tuple(4, hit.second, DataTags::TOT));
             }
         }
@@ -262,14 +263,14 @@ std::string QuarterCore::as_str() const
 {
     std::stringstream str;
 
-    str << "QuarterCore:\n";
-    str << "  Column Index: " << static_cast<int>(col_) << "\n";
-    str << "  Row Index: " << static_cast<int>(row_) << "\n";
-    str << "  Is Last in RD53Event: " << std::boolalpha << is_last_in_event_ << "\n";
-    str << "  Is Neighbour: " << std::boolalpha << is_neighbour_ << "\n";
-    str << "  Is Last in Row: " << std::boolalpha << is_last_ << "\n";
-    str << "  Hits (raw): " << std::bitset<16>(hits_) << "\n";
-    str << "  Total Values (raw): " << std::bitset<64>(tots_) << "\n";
+    str << std::left << "QuarterCore:\n";
+    str << std::left << "  Column Index: " << std::right << std::setw(3) << static_cast<int>(col_) << "\n";
+    str << std::left << "  Row Index: " << std::right << std::setw(6) << static_cast<int>(row_) << "\n";
+    str << std::left << "  Last in event: " << std::right << std::setw(5) << (is_last_in_event_ ? "true " : "false") << "\n";
+    str << std::left << "  Is Neighbour: " << std::right << std::setw(7) <<  (is_neighbour_ ? "true " : "false") << "\n";
+    str << std::left << "  Is Last Row: " << std::right << std::setw(8) <<  (is_last_ ? "true " : "false") << "\n";
+    str << std::left << "  Hits (raw): " << std::right << std::setw(10) << std::bitset<16>(hits_) << "\n";
+    str << std::left << "  Tot Values: " << std::right << std::setw(10) << std::bitset<64>(tots_) << "\n";
 
     auto hit_map = get_hit_map();
     str << "  Hit Map:\n";
@@ -277,7 +278,7 @@ std::string QuarterCore::as_str() const
     {
         for (size_t y = 0; y < hit_map[x].size(); ++y)
         {
-            str << "    (" << std::boolalpha << hit_map[x][y].first << ", " << static_cast<int>(hit_map[x][y].second) << ") ";
+            str << "\t(" << (hit_map[x][y].first ? "true " : "false") << ", " << std::setw(2) << static_cast<int>(hit_map[x][y].second) << ") ";
         }
         str << "\n";
     }

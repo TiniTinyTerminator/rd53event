@@ -11,8 +11,8 @@ int main()
 
     config.chip_id = true;
     config.drop_tot = false;
-    config.compressed_hitmap = false;
-    config.eos_marker = true;
+    config.compressed_hitmap = true;
+    config.eos_marker = false;
     config.bcid = true;
     config.l1id = true;
 
@@ -21,7 +21,7 @@ int main()
     std::srand(std::time(nullptr));
 
     // Generate random points
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 100000; i++)
     {
         int x = std::rand() % (N_QCORES_HORIZONTAL * config.size_qcore_horizontal);
         int y = std::rand() % (N_QCORES_VERTICAL * config.size_qcore_vertical);
@@ -34,6 +34,11 @@ int main()
     RD53Event event(config, header, hits);
 
     auto serialized_data = event.serialize_event();
+
+    for (auto qc : event.get_qcores())
+    {
+        std::cout << qc.as_str();
+    }
 
     std::cout << std::endl;
 

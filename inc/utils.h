@@ -31,6 +31,10 @@ enum class DataTags
     IS_LAST,
     ROW,
     HITMAP,
+    S1,
+    S2,
+    S3,
+    HITPAIR,
     TOT
 };
 
@@ -72,6 +76,10 @@ static std::map<DataTags, std::pair<Color, Color>> data_tag_colors = {
     {DataTags::IS_LAST, {Color::MAGENTA, Color::RESET}},
     {DataTags::ROW, {Color::BLUE, Color::RESET}},
     {DataTags::HITMAP, {Color::BRIGHT_YELLOW, Color::BLACK}},
+    {DataTags::S1, {Color::BRIGHT_RED, Color::BLACK}},
+    {DataTags::S2, {Color::BRIGHT_GREEN, Color::BLACK}},
+    {DataTags::S3, {Color::BRIGHT_BLUE, Color::BLACK}},
+    {DataTags::HITPAIR, {Color::BRIGHT_MAGENTA, Color::BLACK}},
     {DataTags::TOT, {Color::WHITE, Color::RESET}}
 };
 

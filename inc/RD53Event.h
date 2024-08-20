@@ -12,7 +12,7 @@
 
 #include "utils.h"
 
-constexpr bool DEBUG = false;
+constexpr bool DEBUG = true;
 
 constexpr int N_QCORES_VERTICAL = 336 / 2;   // this is the physical number of rows quarter cores on the readout chip
 constexpr int N_QCORES_HORIZONTAL = 432 / 8; // this is the physical number of columns quarter cores on the readout chip
@@ -20,7 +20,7 @@ constexpr int N_QCORES_HORIZONTAL = 432 / 8; // this is the physical number of c
 /**
  * @brief A type alias for a 64-bit unsigned integer
  */
-using word_t = long long;
+using word_t = unsigned long long;
 
 /** @brief A type alias for a pair of a 64-bit unsigned integer and an 8-bit unsigned integer */
 using DataRead = std::pair<word_t, uint8_t>;

@@ -17,27 +17,12 @@ constexpr auto BITS_PER_WORD = std::numeric_limits<word_t>::digits;
  */
 inline std::pair<uint8_t, uint8_t> decode_bitpair(uint8_t bits)
 {
-    if ((bits & 1) == 0)
+    bits &= 0b11;
+    
+    if (((bits >> 1) & 0b1) == 0)
         return {1, 1};
 
     return {bits, 2};
-}
-
-/**
- * @brief Counts the number of set bits (1s) in an integer.
- *
- * @param n The input integer.
- * @return The number of set bits.
- */
-unsigned count_set_bits(int n)
-{
-    unsigned count = 0;
-    while (n)
-    {
-        count += n & 1; // Check the least significant bit
-        n >>= 1;        // Right shift the number
-    }
-    return count;
 }
 
 DataTags state;
@@ -101,7 +86,7 @@ word_t RD53Decoder::_shift_stream(size_t bit_index)
 
         if (jump_size > 0)
         {
-            const auto first_bracket = std::string(bgc[Color::BRIGHT_GREEN]);
+            const auto first_bracket = std::string(bgc[Color::BRIGHT_YELLOW]);
             const auto second_bracket = std::string(bgc[Color::RESET]);
 
             str.insert(fgc[Color::CYAN].size(), first_bracket);
@@ -153,7 +138,7 @@ void RD53Decoder::_get_trigger_tag()
     current_header->trigger_pos = tag & 0b11;
 
     if (DEBUG)
-        std::cout << "Trigger tag: " << static_cast<int>(current_header->trigger_tag) << ", pos: " << static_cast<int>(current_header->trigger_pos) << std::endl;
+        std::cout << "Trigger tag: " << static_cast<uint32_t>(current_header->trigger_tag) << ", pos: " << static_cast<uint32_t>(current_header->trigger_pos) << std::endl;
 
     if ((config.l1id || config.bcid) && current_event == events.begin())
         _get_trigger_ids();
@@ -194,10 +179,14 @@ void RD53Decoder::_get_col()
     uint8_t col = _get_nbits(data_widths::COL_WIDTH);
 
     if (DEBUG)
-        std::cout << "col: " << static_cast<int>(col) << std::endl;
+        std::cout << "col: " << static_cast<uint32_t>(col) << std::endl;
 
     if (col == 0)
     {
+        if (current_qcores->empty())
+        {
+            current_qcores->push_back(QuarterCore());
+        }
         current_qcores->back().set_is_last(true);
         current_qcores->back().set_is_last_in_event(true);
 
@@ -205,6 +194,10 @@ void RD53Decoder::_get_col()
     }
     else if (col >= 56)
     {
+        if (current_qcores->empty())
+        {
+            current_qcores->push_back(QuarterCore());
+        }
         current_qcores->back().set_is_last(true);
         current_qcores->back().set_is_last_in_event(true);
 
@@ -232,14 +225,14 @@ void RD53Decoder::_get_neighbour_and_last()
     qc.set_is_neighbour(_get_nbits(1));
 
     if (DEBUG)
-        std::cout << "is_neighbour: " << static_cast<int>(qc.get_is_neighbour()) << " is_last: " << static_cast<int>(qc.get_is_last()) << std::endl;
+        std::cout << "is_neighbour: " << static_cast<uint32_t>(qc.get_is_neighbour()) << " is_last: " << static_cast<uint32_t>(qc.get_is_last()) << std::endl;
 
     if (qc.get_is_neighbour())
     {
         qc.set_row(qc.get_row() + 1);
 
         if (DEBUG)
-            std::cout << "row: " << qc.get_row() << std::endl;
+            std::cout << "row: " << static_cast<uint32_t>(qc.get_row()) << std::endl;
 
         _get_hitmap();
     }
@@ -254,7 +247,7 @@ void RD53Decoder::_get_row()
     uint8_t row = _get_nbits(data_widths::ROW_WIDTH);
 
     if (DEBUG)
-        std::cout << "row: " << (uint32_t)row << std::endl;
+        std::cout << "row: " << static_cast<uint32_t>(row) << std::endl;
 
     qc.set_row(row);
 
@@ -263,7 +256,6 @@ void RD53Decoder::_get_row()
 
 void RD53Decoder::_get_hitmap()
 {
-    state = DataTags::HITMAP;
 
     uint16_t hit_raw = 0;
     uint64_t tots_raw = 0;
@@ -271,56 +263,75 @@ void RD53Decoder::_get_hitmap()
     if (config.compressed_hitmap)
     {
 
-        auto [row_mask, read_bits] = decode_bitpair(_get_nbits(2, false));
+        state = DataTags::S1;
+        auto [s1, read_bits] = decode_bitpair(_get_nbits(2, false));
+
+        std::cout << std::bitset<2>(s1) << std::endl;
 
         bit_index += read_bits;
-        jump_size = read_bits;
 
-        for (size_t i = 0; i < 2; i++)
+        for (int i = 0; i < 2; ++i)
         {
+            if ((s1 & (2 >> i)) == 0)
+                continue;
 
-            if (row_mask & (2 >> i))
+            state = DataTags::S2;
+            auto [s2, read_bits] = decode_bitpair(_get_nbits(2, false));
+
+            std::cout << std::bitset<2>(s2) << std::endl;
+
+            bit_index += read_bits;
+
+            std::array<uint8_t, 2> ss3 = {0, 0};
+
+            size_t total = __builtin_popcount(s2);
+
+            for (size_t j = 0; j < total; j++)
             {
-                auto [quad_mask, read_bits] = decode_bitpair(_get_nbits(2, false));
+
+                state = DataTags::S3;
+                auto [s3, read_bits] = decode_bitpair(_get_nbits(2, false));
+
+                std::cout << std::bitset<2>(s3) << std::endl;
+
                 bit_index += read_bits;
-                jump_size = read_bits;
 
-                std::vector<uint8_t> masks;
-
-                for (size_t j = 0; j < count_set_bits(quad_mask); j++)
-                {
-                    auto [pair_mask, read_bits] = decode_bitpair(_get_nbits(2, false));
-                    bit_index += read_bits;
-                    jump_size = read_bits;
-
-                    masks.push_back(pair_mask);
-                }
-
-                int current_quad = 0;
-                for (int j = 0; j < 2; j++)
-                {
-                    if (quad_mask & (2 >> j))
-                    {
-                        for (int k = 0; k < 2; k++)
-                        {
-                            if (masks[current_quad] & (2 >> k))
-                            {
-                                auto [hitpair, read_bits] = decode_bitpair(_get_nbits(2, false));
-                                bit_index += read_bits;
-                                jump_size = read_bits;
-
-                                hit_raw |= hitpair << (j * 4 + k * 2);
-                            }
-                        }
-
-                        current_quad++;
-                    }
-                }
+                ss3[j] = s3;
             }
+
+            uint8_t current_s3 = 0;
+
+            for (size_t j = 0; j < 2; j++)
+            {
+                if ((s2 & (2 >> j)) == 0)
+                    continue;
+
+                for (size_t k = 0; k < 2; k++)
+                {
+                    if ((ss3[current_s3] & (2 >> k)) == 0)
+                        continue;
+
+                    state = DataTags::HITPAIR;
+                    auto [hitpair, read_bits] = decode_bitpair(_get_nbits(2, false));
+
+                    std::cout << std::bitset<2>(hitpair) << std::endl;
+
+                    hit_raw |= (((hitpair & 0b01) << 1) | ((hitpair & 0b10) >> 1)) << j * 4 + k * 2 + i * 8;
+
+                    bit_index += read_bits;
+                }
+
+                current_s3++;
+            }
+
         }
     }
     else
+    {
+        state = DataTags::HITMAP;
+
         hit_raw = _get_nbits(data_widths::HITMAP_WIDTH);
+    }
 
     if (!config.drop_tot)
         tots_raw = _get_tots(hit_raw);
@@ -348,7 +359,7 @@ uint64_t RD53Decoder::_get_tots(uint16_t hit_raw)
     uint8_t hit_index = 15;
     uint8_t hit_counter = 0;
 
-    uint8_t n_hits = count_set_bits(hit_raw);
+    uint8_t n_hits = __builtin_popcount(hit_raw);
 
     uint64_t tots = 0;
 

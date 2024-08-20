@@ -23,6 +23,14 @@ std::ostream &operator<<(std::ostream &os, DataTags tag)
         return os << "HITMAP";
     case DataTags::TOT:
         return os << "TOT";
+    case DataTags::S1:
+        return os << "S1";
+    case DataTags::S2:
+        return os << "S2";
+    case DataTags::S3:  
+        return os << "S3";
+    case DataTags::HITPAIR:
+        return os << "HITPAIR";
     default:
         return os << "UNKNOWN";
     }

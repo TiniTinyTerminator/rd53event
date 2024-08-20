@@ -57,11 +57,11 @@ std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> QuarterCore::get_hit_vectors(
     {
         for (int y = 0; y < config->size_qcore_vertical; ++y)
         {
-            uint8_t index = hit_index(y, x);
+            auto [h, tot] = get_hit(x, y);
 
-            if (hits_ >> index & 0x1)
+            if (h)
             {
-                result.push_back({x, y, (tots_ >> (index * 4)) & 0xF});
+                result.push_back({x, y, tot});
             }
         }
     }
@@ -267,8 +267,8 @@ std::string QuarterCore::as_str() const
     str << std::left << "  Column Index: " << std::right << std::setw(3) << static_cast<int>(col_) << "\n";
     str << std::left << "  Row Index: " << std::right << std::setw(6) << static_cast<int>(row_) << "\n";
     str << std::left << "  Last in event: " << std::right << std::setw(5) << (is_last_in_event_ ? "true " : "false") << "\n";
-    str << std::left << "  Is Neighbour: " << std::right << std::setw(7) <<  (is_neighbour_ ? "true " : "false") << "\n";
-    str << std::left << "  Is Last Row: " << std::right << std::setw(8) <<  (is_last_ ? "true " : "false") << "\n";
+    str << std::left << "  Is Neighbour: " << std::right << std::setw(7) << (is_neighbour_ ? "true " : "false") << "\n";
+    str << std::left << "  Is Last Row: " << std::right << std::setw(8) << (is_last_ ? "true " : "false") << "\n";
     str << std::left << "  Hits (raw): " << std::right << std::setw(10) << std::bitset<16>(hits_) << "\n";
     str << std::left << "  Tot Values: " << std::right << std::setw(10) << std::bitset<64>(tots_) << "\n";
 
@@ -284,4 +284,15 @@ std::string QuarterCore::as_str() const
     }
 
     return str.str();
+}
+
+bool QuarterCore::operator==(const QuarterCore &other) const
+{
+    return col_ == other.col_ &&
+           row_ == other.row_ &&
+           hits_ == other.hits_ &&
+           tots_ == other.tots_ &&
+           is_last_ == other.is_last_ &&
+           is_neighbour_ == other.is_neighbour_ &&
+           is_last_in_event_ == other.is_last_in_event_;
 }

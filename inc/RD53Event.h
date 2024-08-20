@@ -327,6 +327,8 @@ public:
      */
     std::string as_str() const;
 
+    bool operator==(const QuarterCore &other) const;
+
 private:
     // Member variables
     /** The Rd53StreamConfig object that contains the configuration parameters */
@@ -369,7 +371,7 @@ public:
      * @param lcid The local chamber ID (default: 0)
      * @param bcid The board chamber ID (default: 0)
      */
-    RD53Event(const Rd53StreamConfig &config, const StreamHeader &header, const std::vector<std::tuple<int, int, int>> &hits);
+    RD53Event(const Rd53StreamConfig &config, const StreamHeader &header, const std::vector<std::tuple<uint16_t, uint16_t, uint8_t>> &hits);
 
     /**
      * @brief Constructs an RD53Event object
@@ -414,7 +416,7 @@ public:
      *
      * @throws None
      */
-    std::vector<std::tuple<int, int, int>> get_hits()
+    std::vector<std::tuple<uint16_t, uint16_t, uint8_t>> get_hits()
     {
         if (hits.empty())
             _get_pixelframe_from_qcores();
@@ -430,7 +432,7 @@ public:
 
 private:
     /** The vector of hits in the event */
-    std::vector<std::tuple<int, int, int>> hits;
+    std::vector<std::tuple<uint16_t, uint16_t, uint8_t>> hits;
 
     /** The vector of QuarterCore objects representing the quarter cores in the event */
     std::vector<QuarterCore> qcores;

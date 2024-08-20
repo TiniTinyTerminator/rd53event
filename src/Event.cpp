@@ -2,7 +2,7 @@
 
 #include <bitset>
 
-RD53Event::RD53Event(const Rd53StreamConfig &config, const StreamHeader &header, const std::vector<std::tuple<int, int, int>> &hits)
+RD53Event::RD53Event(const Rd53StreamConfig &config, const StreamHeader &header, const std::vector<std::tuple<uint16_t, uint16_t, uint8_t>> &hits)
     : config(config), header(header), hits(hits)
 {
 }
@@ -88,17 +88,17 @@ void RD53Event::_get_pixelframe_from_qcores()
     if (qcores.empty())
         throw std::runtime_error("No qcores in event");
 
+    hits = {};
+
     for (auto &qcore : qcores)
     {
         auto qcore_coords = qcore.get_hit_vectors();
+        auto col = qcore.get_col(), row = qcore.get_row();
 
         for (auto &&[x, y, tot] : qcore_coords)
         {
-            x += qcore.get_col() * config.size_qcore_horizontal;
-            y += qcore.get_row() * config.size_qcore_vertical;
+            hits.push_back({x + col * config.size_qcore_horizontal, y + row * config.size_qcore_vertical, tot});
         }
-
-        hits.insert(hits.end(), qcore_coords.begin(), qcore_coords.end());
     }
 }
 

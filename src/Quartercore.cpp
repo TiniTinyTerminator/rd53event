@@ -50,12 +50,12 @@ std::pair<uint16_t, uint64_t> QuarterCore::get_hit_raw() const
     return {hits_, tots_};
 }
 
-std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> QuarterCore::get_hit_vectors() const
+std::vector<HitCoord> QuarterCore::get_hit_vectors() const
 {
-    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> result;
-    for (int x = 0; x < config->size_qcore_horizontal; ++x)
+    std::vector<HitCoord> result;
+    for (uint16_t x = 0; x < config->size_qcore_horizontal; ++x)
     {
-        for (int y = 0; y < config->size_qcore_vertical; ++y)
+        for (uint16_t y = 0; y < config->size_qcore_vertical; ++y)
         {
             auto [h, tot] = get_hit(x, y);
 
@@ -241,9 +241,9 @@ uint8_t QuarterCore::hit_index(uint8_t row, uint8_t col) const
 {
     if (col >= config->size_qcore_horizontal || row >= config->size_qcore_vertical)
     {
-        throw std::runtime_error("ERROR: coordinates out of bounds");
+        throw std::runtime_error("coordinates (" + std::to_string(col) + ", " + std::to_string(row) + ") out of bounds");
     }
-
+    
     if (config->size_qcore_vertical == 2 && config->size_qcore_horizontal == 8)
     {
         return 2 * col + row;
@@ -254,7 +254,7 @@ uint8_t QuarterCore::hit_index(uint8_t row, uint8_t col) const
     }
     else
     {
-        throw std::runtime_error("ERROR: Wrong qcore size");
+        throw std::runtime_error("ERROR: Wrong qcore size: " + std::to_string(config->size_qcore_horizontal) + " x " + std::to_string(config->size_qcore_vertical));
     }
 }
 

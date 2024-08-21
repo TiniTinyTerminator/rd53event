@@ -33,7 +33,7 @@ RD53Decoder::RD53Decoder(const Rd53StreamConfig &config, std::vector<word_t> &wo
 
 inline void RD53Decoder::_new_event()
 {
-    events.push_back({StreamHeader(), std::vector<QuarterCore>(0, QuarterCore(config))});
+    events.push_back({RD53Header(), std::vector<QuarterCore>(0, QuarterCore(config))});
 
     current_event = events.begin() + events.size() - 1;
 
@@ -392,8 +392,6 @@ std::vector<RD53Event> RD53Decoder::get_events() const
 
     for (auto [header, qcores] : events)
     {
-
-        std::cout << i++ << std::endl;
         processed_events.push_back(RD53Event(config, header, qcores));
     }
 

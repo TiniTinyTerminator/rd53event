@@ -1,1 +1,1 @@
-from .RD53py import RD53Event, Rd53StreamConfig, RD53Decoder, QuarterCore, N_QCORES_HORIZONTAL, N_QCORES_VERTICAL
+from .RD53py import RD53Event, Rd53StreamConfig, RD53Decoder, RD53Header, QuarterCore, HitCoord, N_QCORES_HORIZONTAL, N_QCORES_VERTICAL

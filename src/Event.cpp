@@ -2,12 +2,12 @@
 
 #include <bitset>
 
-RD53Event::RD53Event(const Rd53StreamConfig &config, const StreamHeader &header, const std::vector<std::tuple<uint16_t, uint16_t, uint8_t>> &hits)
+RD53Event::RD53Event(const Rd53StreamConfig &config, const RD53Header &header, const std::vector<HitCoord> &hits)
     : config(config), header(header), hits(hits)
 {
 }
 
-RD53Event::RD53Event(const Rd53StreamConfig &config, const StreamHeader &header, std::vector<QuarterCore> &qcores)
+RD53Event::RD53Event(const Rd53StreamConfig &config, const RD53Header &header, std::vector<QuarterCore> &qcores)
     : config(config), header(header), qcores(qcores)
 {
     // update address of config in qcores
@@ -24,6 +24,19 @@ RD53Event::RD53Event(const RD53Event &other) : config(other.config), header(othe
         qcore.set_config(config);
     }
 }
+
+RD53Event & RD53Event::operator=(const RD53Event &other)
+{
+    if (&other != this) *this = other;
+
+    for (auto &qcore : qcores)
+    {
+        qcore.set_config(config);
+    }
+
+    return *this;
+}
+
 
 void RD53Event::_get_qcores_from_pixelframe()
 {
@@ -97,7 +110,7 @@ void RD53Event::_get_pixelframe_from_qcores()
 
         for (auto &&[x, y, tot] : qcore_coords)
         {
-            hits.push_back({x + col * config.size_qcore_horizontal, y + row * config.size_qcore_vertical, tot});
+            hits.push_back(HitCoord(x + col * config.size_qcore_horizontal, y + row * config.size_qcore_vertical, tot));
         }
     }
 }
@@ -131,26 +144,29 @@ std::vector<word_t> RD53Event::serialize_event()
         break;
     }
 
-    size_t s = 0;
-    for (const auto &[width, word, name] : packets)
+    if (DEBUG)
     {
-        std::string bits = get_lsb_binary(word, width);
-
-        s += width;
-
-        if (s >= WORD_SIZE)
+        size_t s = 0;
+        for (const auto &[width, word, name] : packets)
         {
-            std::cout << set_color(data_tag_colors[name]) << bits.substr(0, width - (s - WORD_SIZE)) << fgc[Color::RESET] << bgc[Color::RESET] << std::endl
-                      << set_color(data_tag_colors[name]) << bits.substr(width - (s - WORD_SIZE));
+            std::string bits = get_lsb_binary(word, width);
 
-            s -= WORD_SIZE;
+            s += width;
+
+            if (s >= WORD_SIZE)
+            {
+                std::cout << set_color(data_tag_colors[name]) << bits.substr(0, width - (s - WORD_SIZE)) << fgc[Color::RESET] << bgc[Color::RESET] << std::endl
+                          << set_color(data_tag_colors[name]) << bits.substr(width - (s - WORD_SIZE));
+
+                s -= WORD_SIZE;
+            }
+            else
+            {
+                std::cout << set_color(data_tag_colors[name]) << bits;
+            }
         }
-        else
-        {
-            std::cout << set_color(data_tag_colors[name]) << bits;
-        }
+        std::cout << fgc[Color::RESET] << bgc[Color::RESET] << std::endl;
     }
-    std::cout << fgc[Color::RESET] << bgc[Color::RESET] << std::endl;
 
     for (const auto &[width, word, name] : packets)
     {
@@ -217,7 +233,7 @@ std::vector<std::tuple<uint8_t, unsigned long long, DataTags>> RD53Event::_retri
     return qcore_packages;
 }
 
-std::string RD53Event::as_str()
+std::string RD53Event::as_str() const
 {
     std::stringstream ss;
 
@@ -225,16 +241,16 @@ std::string RD53Event::as_str()
 
     ss << "header: " << header.as_str() << std::endl;
 
-    auto qcores_data = get_qcores();
-    for (const auto &qcore : qcores_data)
+    // auto qcores_data = get_qcores();
+    for (const auto &qcore : qcores)
     {
         ss << qcore.as_str() << std::endl;
     }
 
-    auto hits_data = get_hits();
-    for (const auto &hit : hits_data)
+    // auto hits_data = get_hits();
+    for (const auto &hit : hits)
     {
-        ss << "(" << std::get<0>(hit) << ", " << std::get<1>(hit) << ", " << std::get<2>(hit) << ")";
+        ss << "(" << hit.x << ", " << hit.y << ", " << hit.val << ")";
     }
 
     return ss.str();

@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <memory>
 #include <sstream>
+#include <cstdint>
 
 #include "utils.h"
 
@@ -48,10 +49,34 @@ namespace data_widths
     constexpr uint8_t TOT_WIDTH = 4;
 };
 
+struct HitCoord
+{
+    uint16_t x;
+    uint16_t y;
+    uint8_t val;
+
+    HitCoord(uint16_t x = 0, uint16_t y = 0, uint8_t val = 0) : x(x), y(y), val(val) {}
+
+    std::string as_str() const
+    {
+        return "(" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(val) + ")";
+    }
+
+    bool operator==(const HitCoord &other) const
+    {
+        return x == other.x && y == other.y && val == other.val;
+    }
+
+    bool operator!=(const HitCoord &other) const
+    {
+        return !(*this == other);
+    }
+};
+
 /**
  * @brief A struct representing the header of a stream of RD53 event data
  */
-struct StreamHeader
+struct RD53Header
 {
     /** @brief The trigger tag field */
     uint8_t trigger_tag;
@@ -63,6 +88,15 @@ struct StreamHeader
     uint16_t bcid;
     /** @brief The L1ID field */
     uint16_t l1id;
+
+    RD53Header(uint8_t trigger_tag = 0, uint8_t trigger_pos = 0, uint8_t chip_id = 0, uint16_t bcid = 0, uint16_t l1id = 0)
+        : trigger_tag{trigger_tag}
+        , trigger_pos{trigger_pos}
+        , chip_id{chip_id}
+        , bcid{bcid}
+        , l1id{l1id}
+    {
+    }
 
     std::string as_str() const
     {
@@ -78,8 +112,8 @@ struct StreamHeader
  */
 struct Rd53StreamConfig
 {
-    int size_qcore_vertical = 4;   // this is the physical dimensons of the quarter cores on the sensor
-    int size_qcore_horizontal = 4; // this is the physical dimensons of the quarter cores on the sensor
+    uint8_t size_qcore_vertical = 4;   // this is the physical dimensons of the quarter cores on the sensor
+    uint8_t size_qcore_horizontal = 4; // this is the physical dimensons of the quarter cores on the sensor
 
     bool chip_id;
     bool drop_tot;
@@ -89,6 +123,21 @@ struct Rd53StreamConfig
     bool l1id;
 
     int events_per_stream; // unused at the moment
+
+    Rd53StreamConfig(int qcore_vertical = 4, int qcore_horizontal = 4, bool _chip_id = false, bool _drop_tot = false,
+                     bool _compressed_hitmap = false, bool _eos_marker = false, bool _bcid = false, bool _l1id = false,
+                     int _events_per_stream = 0)
+        : size_qcore_vertical(qcore_vertical)
+        , size_qcore_horizontal(qcore_horizontal)
+        , chip_id(_chip_id)
+        , drop_tot(_drop_tot)
+        , compressed_hitmap(_compressed_hitmap)
+        , eos_marker(_eos_marker)
+        , bcid(_bcid)
+        , l1id(_l1id)
+        , events_per_stream(_events_per_stream)
+    {
+    }
 
     std::string as_str() const
     {
@@ -188,7 +237,7 @@ public:
      *
      * @return A vector of triplets containing the row, column and total values of hits.
      */
-    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> get_hit_vectors() const;
+    std::vector<HitCoord> get_hit_vectors() const;
 
     /**
      * @brief Returns a 2D vector representing the hit map of the QuarterCore
@@ -359,7 +408,9 @@ private:
 class RD53Event
 {
 public:
+    RD53Event() = default;
     RD53Event(const RD53Event &other);
+    RD53Event & operator=(const RD53Event &other);
 
     /**
      * @brief Constructs an RD53Event object
@@ -371,16 +422,16 @@ public:
      * @param lcid The local chamber ID (default: 0)
      * @param bcid The board chamber ID (default: 0)
      */
-    RD53Event(const Rd53StreamConfig &config, const StreamHeader &header, const std::vector<std::tuple<uint16_t, uint16_t, uint8_t>> &hits);
+    RD53Event(const Rd53StreamConfig &config, const RD53Header &header, const std::vector<HitCoord> &hits);
 
     /**
      * @brief Constructs an RD53Event object
      *
      * @param config The Rd53StreamConfig object that contains the configuration parameters
-     * @param header The StreamHeader object that contains the header of the event
+     * @param header The RD53Header object that contains the header of the event
      * @param qcores The vector of QuarterCore objects that contain the hits in the event
      */
-    RD53Event(const Rd53StreamConfig &config, const StreamHeader &header, std::vector<QuarterCore> &qcores);
+    RD53Event(const Rd53StreamConfig &config, const RD53Header &header, std::vector<QuarterCore> &qcores);
 
     /**
      * @brief Serializes the event data into a vector of 64-bit integers
@@ -393,7 +444,7 @@ public:
     const Rd53StreamConfig config;
 
     /** The event header */
-    const StreamHeader header;
+    const RD53Header header;
 
     /**
      * Retrieves the vector of QuarterCore objects representing the quarter cores in the event.
@@ -416,7 +467,7 @@ public:
      *
      * @throws None
      */
-    std::vector<std::tuple<uint16_t, uint16_t, uint8_t>> get_hits()
+    std::vector<HitCoord> get_hits()
     {
         if (hits.empty())
             _get_pixelframe_from_qcores();
@@ -428,11 +479,11 @@ public:
      *
      * @return A string containing the data of this class
      */
-    std::string as_str();
+    std::string as_str() const;
 
 private:
     /** The vector of hits in the event */
-    std::vector<std::tuple<uint16_t, uint16_t, uint8_t>> hits;
+    std::vector<HitCoord> hits;
 
     /** The vector of QuarterCore objects representing the quarter cores in the event */
     std::vector<QuarterCore> qcores;
@@ -577,7 +628,7 @@ private:
     const Rd53StreamConfig config;
 
     /** @brief The vector of pairs representing the events in the event data stream */
-    using EventVec = std::vector<std::pair<StreamHeader, std::vector<QuarterCore>>>;
+    using EventVec = std::vector<std::pair<RD53Header, std::vector<QuarterCore>>>;
 
     /** @brief The vector of pairs representing the events in the event data stream */
     EventVec events;
@@ -586,7 +637,7 @@ private:
     EventVec::iterator current_event;
 
     /** @brief A pointer to the header of the current event */
-    StreamHeader *current_header;
+    RD53Header *current_header;
 
     /** @brief A pointer to the vector of QuarterCore objects of the current event */
     std::vector<QuarterCore> *current_qcores;

@@ -1,13 +1,15 @@
-#include "RD53Event.h"
+#include "RD53BEvent.h"
 
 #include <iostream>
 #include <bitset>
 #include <ctime>
 #include <cassert>
 
+using namespace RD53B;
+
 int main()
 {
-    Rd53StreamConfig config;
+    StreamConfig config;
 
     config.chip_id = true;
     config.drop_tot = false;
@@ -15,6 +17,8 @@ int main()
     config.eos_marker = false;
     config.bcid = true;
     config.l1id = true;
+    config.size_qcore_horizontal = 8;
+    config.size_qcore_vertical = 2;
 
     std::vector<HitCoord> hits;
 
@@ -36,9 +40,9 @@ int main()
         }
     }
 
-    RD53Header header = {13, 1, 3, 200, 500};
+    Header header = {13, 1, 3, 200, 500};
 
-    RD53Event event(config, header, hits);
+    Event event(config, header, hits);
 
     auto serialized_data = event.serialize_event();
 
@@ -49,7 +53,7 @@ int main()
 
     std::cout << std::endl;
 
-    RD53Decoder decoder(config, serialized_data);
+    Decoder decoder(config, serialized_data);
 
     decoder.process_stream();
 

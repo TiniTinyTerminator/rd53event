@@ -1,13 +1,15 @@
-#include "RD53Event.h"
+#include "RD53BEvent.h"
 
 #include <bitset>
 
-RD53Event::RD53Event(const Rd53StreamConfig &config, const RD53Header &header, const std::vector<HitCoord> &hits)
+using namespace RD53B;
+
+Event::Event(const StreamConfig &config, const Header &header, const std::vector<HitCoord> &hits)
     : config(config), header(header), hits(hits)
 {
 }
 
-RD53Event::RD53Event(const Rd53StreamConfig &config, const RD53Header &header, std::vector<QuarterCore> &qcores)
+Event::Event(const StreamConfig &config, const Header &header, std::vector<QuarterCore> &qcores)
     : config(config), header(header), qcores(qcores)
 {
     // update address of config in qcores
@@ -17,7 +19,7 @@ RD53Event::RD53Event(const Rd53StreamConfig &config, const RD53Header &header, s
     }
 }
 
-RD53Event::RD53Event(const RD53Event &other) : config(other.config), header(other.header), hits(other.hits), qcores(other.qcores)
+Event::Event(const Event &other) : config(other.config), header(other.header), hits(other.hits), qcores(other.qcores)
 {
     for (auto &qcore : qcores)
     {
@@ -25,7 +27,7 @@ RD53Event::RD53Event(const RD53Event &other) : config(other.config), header(othe
     }
 }
 
-RD53Event & RD53Event::operator=(const RD53Event &other)
+Event & Event::operator=(const Event &other)
 {
     if (&other != this) *this = other;
 
@@ -38,7 +40,7 @@ RD53Event & RD53Event::operator=(const RD53Event &other)
 }
 
 
-void RD53Event::_get_qcores_from_pixelframe()
+void Event::_get_qcores_from_pixelframe()
 {
     if (!qcores.empty())
         throw std::runtime_error("QuarterCores already set in event");
@@ -94,7 +96,7 @@ void RD53Event::_get_qcores_from_pixelframe()
     }
 }
 
-void RD53Event::_get_pixelframe_from_qcores()
+void Event::_get_pixelframe_from_qcores()
 {
     if (!hits.empty())
         throw std::runtime_error("Hits already set in event");
@@ -115,7 +117,7 @@ void RD53Event::_get_pixelframe_from_qcores()
     }
 }
 
-std::vector<word_t> RD53Event::serialize_event()
+std::vector<word_t> Event::serialize_event()
 {
     if (qcores.empty())
         _get_qcores_from_pixelframe();
@@ -218,7 +220,7 @@ std::vector<word_t> RD53Event::serialize_event()
     return result;
 }
 
-std::vector<std::tuple<uint8_t, unsigned long long, DataTags>> RD53Event::_retrieve_qcore_data()
+std::vector<std::tuple<uint8_t, unsigned long long, DataTags>> Event::_retrieve_qcore_data()
 {
     bool prev_last_in_col = true;
     std::vector<std::tuple<uint8_t, unsigned long long, DataTags>> qcore_packages;
@@ -233,7 +235,7 @@ std::vector<std::tuple<uint8_t, unsigned long long, DataTags>> RD53Event::_retri
     return qcore_packages;
 }
 
-std::string RD53Event::as_str() const
+std::string Event::as_str() const
 {
     std::stringstream ss;
 

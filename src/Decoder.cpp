@@ -1,4 +1,4 @@
-#include "RD53Event.h"
+#include "RD53BEvent.h"
 
 #include <cstdint>
 #include <stdexcept>
@@ -6,6 +6,8 @@
 #include <limits>
 #include <bitset>
 #include <string>
+
+using namespace RD53B;
 
 constexpr auto BITS_PER_WORD = std::numeric_limits<word_t>::digits;
 
@@ -27,13 +29,13 @@ inline std::pair<uint8_t, uint8_t> decode_bitpair(uint8_t bits)
 
 DataTags state;
 
-RD53Decoder::RD53Decoder(const Rd53StreamConfig &config, std::vector<word_t> &words) : stream(words), config(config), bit_index(0)
+Decoder::Decoder(const StreamConfig &config, std::vector<word_t> &words) : stream(words), config(config), bit_index(0)
 {
 }
 
-inline void RD53Decoder::_new_event()
+inline void Decoder::_new_event()
 {
-    events.push_back({RD53Header(), std::vector<QuarterCore>(0, QuarterCore(config))});
+    events.push_back({Header(), std::vector<QuarterCore>(0, QuarterCore(config))});
 
     current_event = events.begin() + events.size() - 1;
 
@@ -43,7 +45,7 @@ inline void RD53Decoder::_new_event()
     qc = QuarterCore(config);
 }
 
-void RD53Decoder::process_stream()
+void Decoder::process_stream()
 {
     _new_event();
 
@@ -56,7 +58,7 @@ void RD53Decoder::process_stream()
     _get_trigger_tag();
 }
 
-word_t RD53Decoder::_shift_stream(size_t bit_index)
+word_t Decoder::_shift_stream(size_t bit_index)
 {
 
     size_t word_index = bit_index / word_size;
@@ -99,7 +101,7 @@ word_t RD53Decoder::_shift_stream(size_t bit_index)
     return full_word;
 }
 
-word_t RD53Decoder::_get_nbits(uint8_t n_bits, bool increment)
+word_t Decoder::_get_nbits(uint8_t n_bits, bool increment)
 {
     if (increment)
         jump_size = n_bits;
@@ -114,7 +116,7 @@ word_t RD53Decoder::_get_nbits(uint8_t n_bits, bool increment)
     return (a >> (word_size - n_bits)) & ((1 << n_bits) - 1);
 }
 
-void RD53Decoder::_validate_chip_id()
+void Decoder::_validate_chip_id()
 {
 
     uint8_t chip_id = stream[0] >> 61 & 0b11;
@@ -128,7 +130,7 @@ void RD53Decoder::_validate_chip_id()
     current_header->chip_id = chip_id;
 }
 
-void RD53Decoder::_get_trigger_tag()
+void Decoder::_get_trigger_tag()
 {
     state = DataTags::TRIGGER_TAG;
 
@@ -146,7 +148,7 @@ void RD53Decoder::_get_trigger_tag()
     _get_col();
 }
 
-void RD53Decoder::_get_trigger_ids()
+void Decoder::_get_trigger_ids()
 {
     state = DataTags::EXTRA_IDS;
 
@@ -172,7 +174,7 @@ void RD53Decoder::_get_trigger_ids()
         std::cout << "ids: " << current_header->bcid << " " << current_header->l1id << std::endl;
 }
 
-void RD53Decoder::_get_col()
+void Decoder::_get_col()
 {
     state = DataTags::COLUMN;
 
@@ -214,7 +216,7 @@ void RD53Decoder::_get_col()
     }
 }
 
-void RD53Decoder::_get_neighbour_and_last()
+void Decoder::_get_neighbour_and_last()
 {
     state = DataTags::IS_LAST;
 
@@ -240,7 +242,7 @@ void RD53Decoder::_get_neighbour_and_last()
         _get_row();
 }
 
-void RD53Decoder::_get_row()
+void Decoder::_get_row()
 {
     state = DataTags::ROW;
 
@@ -254,7 +256,7 @@ void RD53Decoder::_get_row()
     _get_hitmap();
 }
 
-void RD53Decoder::_get_hitmap()
+void Decoder::_get_hitmap()
 {
 
     uint16_t hit_raw = 0;
@@ -355,7 +357,7 @@ void RD53Decoder::_get_hitmap()
         _get_neighbour_and_last();
 }
 
-uint64_t RD53Decoder::_get_tots(uint16_t hit_raw)
+uint64_t Decoder::_get_tots(uint16_t hit_raw)
 {
     state = DataTags::TOT;
 
@@ -384,15 +386,15 @@ uint64_t RD53Decoder::_get_tots(uint16_t hit_raw)
     return tots;
 }
 
-std::vector<RD53Event> RD53Decoder::get_events() const
+std::vector<Event> Decoder::get_events() const
 {
-    std::vector<RD53Event> processed_events;
+    std::vector<Event> processed_events;
 
     uint32_t i = 0;
 
     for (auto [header, qcores] : events)
     {
-        processed_events.push_back(RD53Event(config, header, qcores));
+        processed_events.push_back(Event(config, header, qcores));
     }
 
     return processed_events;

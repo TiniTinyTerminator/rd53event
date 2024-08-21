@@ -1,6 +1,6 @@
 build
 .vscode
-RD53py
+RD53BEvent
 lib
 __init__.py
 __pycache__

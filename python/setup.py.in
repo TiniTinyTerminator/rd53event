@@ -23,9 +23,9 @@ class CompiledLibInstall(install):
         lib_dir = os.path.join(self.install_lib, 'RD53py')
         os.makedirs(lib_dir, exist_ok=True)
         filenames = [
-            'RD53py.py',
+            'RD53BEvent.py',
             '__init__.py',
-            '_RD53py.so',
+            '_RD53BEventpy.so',
         ]
 
         # Install files
@@ -35,7 +35,7 @@ class CompiledLibInstall(install):
 
 if __name__ == '__main__':
     setuptools.setup(
-        name='RD53',
+        name='RD53BEvent',
         version='0.1.0',
         packages=[],
         license='Apache License 2.0',

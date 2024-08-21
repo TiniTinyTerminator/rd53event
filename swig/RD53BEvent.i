@@ -1,10 +1,10 @@
-// RD53py.i
-%module RD53py
+%module RD53BEvent
 
 %{
     // #include <vector>
-    #include "RD53Event.h"
+    #include "RD53BEvent.h"
 
+    using namespace RD53B;
 %}
 
 %include "std_string.i"
@@ -17,7 +17,7 @@
 
 %template(HitCoordVector) std::vector<HitCoord>;
 %template(QCoreVector) std::vector<QuarterCore>;
-%template(RD53EventVector) std::vector<RD53Event>;
+%template(RD53EventVector) std::vector<Event>;
 %template(StreamVector) std::vector<word_t>;
 
 %feature("python:annotations", "c");
@@ -52,18 +52,18 @@
     PyObject *seq = PySequence_Fast($input, "Expected a sequence");
     if (!seq) SWIG_fail;
     
-    Py_ssize_t len = PySequence_Size(seq);
+    Py_ssize_t len = PySequence_Fast_GET_SIZE(seq);
 
-    vec = new std::vector<word_t>();
+    vec = new std::vector<word_t>(len);
 
     for (Py_ssize_t i = 0; i < len; ++i) {
-        PyObject *item = PySequence_GetItem(seq, i);
+        PyObject *item = PySequence_Fast_GET_ITEM(seq, i);
         word_t value = (word_t)PyLong_AsUnsignedLongLong(item);
         if (PyErr_Occurred()) {
             Py_DECREF(seq);
             SWIG_fail;
         }
-        vec->push_back(value);
+        vec->data()[i] = value;
     }
 
     $1 = vec;
@@ -87,10 +87,10 @@
     delete $1;
 }
 
-%typemap(out) std::vector<RD53Event> {
+%typemap(out) std::vector<Event> {
     $result = PyList_New($1.size());
     for (size_t i = 0; i < $1.size(); ++i) {
-        PyList_SetItem($result, i, SWIG_NewPointerObj(new RD53Event($1.at(i)), SWIGTYPE_p_RD53Event, SWIG_POINTER_OWN));
+        PyList_SetItem($result, i, SWIG_NewPointerObj(new Event($1.at(i)), SWIGTYPE_p_RD53Event, SWIG_POINTER_OWN));
     }
 }
 
@@ -106,11 +106,11 @@
 }
 %enddef
 
-%STR_REPR_EXTEND(QuarterCore)
-%STR_REPR_EXTEND(RD53Event)
-%STR_REPR_EXTEND(RD53Header)
-%STR_REPR_EXTEND(Rd53StreamConfig)
-%STR_REPR_EXTEND(HitCoord)
+%STR_REPR_EXTEND(RD53B::QuarterCore)
+%STR_REPR_EXTEND(RD53B::Event)
+%STR_REPR_EXTEND(RD53B::Header)
+%STR_REPR_EXTEND(RD53B::StreamConfig)
+%STR_REPR_EXTEND(RD53B::HitCoord)
 
 // Handle overloaded methods
 %rename(get_hit_by_coordinates) QuarterCore::get_hit(uint8_t, uint8_t) const;
@@ -119,4 +119,4 @@
 %rename(set_hit_by_coordinates) QuarterCore::set_hit(uint8_t, uint8_t, uint8_t);
 %rename(set_hit_by_index) QuarterCore::set_hit(uint8_t, uint8_t);
 
-%include "RD53Event.h"
+%include "RD53BEvent.h"

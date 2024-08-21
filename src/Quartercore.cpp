@@ -1,9 +1,11 @@
-#include "RD53Event.h"
+#include "RD53BEvent.h"
 
 #include <bitset>
 #include <iomanip>
 
-QuarterCore::QuarterCore(const Rd53StreamConfig &config, uint8_t col, uint8_t row)
+using namespace RD53B;
+
+QuarterCore::QuarterCore(const StreamConfig &config, uint8_t col, uint8_t row)
     : config(&config), col_(col), row_(row), is_last_(false), is_neighbour_(false), is_last_in_event_(false), hits_(0), tots_(0)
 {
 }
@@ -237,7 +239,7 @@ std::vector<std::tuple<uint8_t, unsigned long long, DataTags>> QuarterCore::seri
     return qcore_data;
 }
 
-uint8_t QuarterCore::hit_index(uint8_t row, uint8_t col) const
+uint8_t QuarterCore::hit_index(uint8_t col, uint8_t row) const
 {
     if (col >= config->size_qcore_horizontal || row >= config->size_qcore_vertical)
     {

@@ -1,7 +1,7 @@
 %module RD53BEvent
 
+
 %{
-    // #include <vector>
     #include "RD53BEvent.h"
 
     using namespace RD53B;
@@ -13,15 +13,12 @@
 %include "std_pair.i"
 %include "inttypes.i"
 
-%typemap(python, pytypes="QuarterCore") QuarterCore*;
-
 %template(HitCoordVector) std::vector<HitCoord>;
 %template(QCoreVector) std::vector<QuarterCore>;
-%template(RD53EventVector) std::vector<Event>;
+%template(EventVector) std::vector<Event>;
 %template(StreamVector) std::vector<word_t>;
 
 %feature("python:annotations", "c");
-
 
 // Typemap for converting std::vector<std::vector<std::pair<bool, uint8_t>>> to Python list
 %typemap(out) std::vector<std::vector<std::pair<bool, uint8_t>>> {

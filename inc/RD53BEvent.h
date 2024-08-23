@@ -79,7 +79,7 @@ namespace RD53B
     /**
      * @brief A struct representing the header of a stream of RD53 event data
      */
-    struct Header
+    struct StreamHeader
     {
         /** @brief The trigger tag field */
         uint8_t trigger_tag;
@@ -92,7 +92,7 @@ namespace RD53B
         /** @brief The L1ID field */
         uint16_t l1id;
 
-        Header(uint8_t trigger_tag = 0, uint8_t trigger_pos = 0, uint8_t chip_id = 0, uint16_t bcid = 0, uint16_t l1id = 0)
+        StreamHeader(uint8_t trigger_tag = 0, uint8_t trigger_pos = 0, uint8_t chip_id = 0, uint16_t bcid = 0, uint16_t l1id = 0)
             : trigger_tag{trigger_tag}, trigger_pos{trigger_pos}, chip_id{chip_id}, bcid{bcid}, l1id{l1id}
         {
         }
@@ -413,16 +413,16 @@ namespace RD53B
          * @param lcid The local chamber ID (default: 0)
          * @param bcid The board chamber ID (default: 0)
          */
-        Event(const StreamConfig &config, const Header &header, const std::vector<HitCoord> &hits);
+        Event(const StreamConfig &config, const StreamHeader &header, const std::vector<HitCoord> &hits);
 
         /**
          * @brief Constructs an Event object
          *
          * @param config The StreamConfig object that contains the configuration parameters
-         * @param header The Header object that contains the header of the event
+         * @param header The StreamHeader object that contains the header of the event
          * @param qcores The vector of QuarterCore objects that contain the hits in the event
          */
-        Event(const StreamConfig &config, const Header &header, std::vector<QuarterCore> &qcores);
+        Event(const StreamConfig &config, const StreamHeader &header, std::vector<QuarterCore> &qcores);
 
         /**
          * @brief Serializes the event data into a vector of 64-bit integers
@@ -435,7 +435,7 @@ namespace RD53B
         const StreamConfig config;
 
         /** The event header */
-        const Header header;
+        const StreamHeader header;
 
         /**
          * Retrieves the vector of QuarterCore objects representing the quarter cores in the event.
@@ -619,7 +619,7 @@ namespace RD53B
         const StreamConfig config;
 
         /** @brief The vector of pairs representing the events in the event data stream */
-        using EventVec = std::vector<std::pair<Header, std::vector<QuarterCore>>>;
+        using EventVec = std::vector<std::pair<StreamHeader, std::vector<QuarterCore>>>;
 
         /** @brief The vector of pairs representing the events in the event data stream */
         EventVec events;
@@ -628,7 +628,7 @@ namespace RD53B
         EventVec::iterator current_event;
 
         /** @brief A pointer to the header of the current event */
-        Header *current_header;
+        StreamHeader *current_header;
 
         /** @brief A pointer to the vector of QuarterCore objects of the current event */
         std::vector<QuarterCore> *current_qcores;

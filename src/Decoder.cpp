@@ -35,7 +35,7 @@ Decoder::Decoder(const StreamConfig &config, std::vector<word_t> &words) : strea
 
 inline void Decoder::_new_event()
 {
-    events.push_back({Header(), std::vector<QuarterCore>(0, QuarterCore(config))});
+    events.push_back({StreamHeader(), std::vector<QuarterCore>(0, QuarterCore(config))});
 
     current_event = events.begin() + events.size() - 1;
 

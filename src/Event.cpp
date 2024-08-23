@@ -4,12 +4,12 @@
 
 using namespace RD53B;
 
-Event::Event(const StreamConfig &config, const Header &header, const std::vector<HitCoord> &hits)
+Event::Event(const StreamConfig &config, const StreamHeader &header, const std::vector<HitCoord> &hits)
     : config(config), header(header), hits(hits)
 {
 }
 
-Event::Event(const StreamConfig &config, const Header &header, std::vector<QuarterCore> &qcores)
+Event::Event(const StreamConfig &config, const StreamHeader &header, std::vector<QuarterCore> &qcores)
     : config(config), header(header), qcores(qcores)
 {
     // update address of config in qcores

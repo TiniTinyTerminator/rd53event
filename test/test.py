@@ -2,13 +2,13 @@ import random
 import sys
 import os
 # Ensure the generated SWIG module is in the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'RD53py')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'RD53BEvent')))
 
-from RD53py import QuarterCore, RD53Decoder, Rd53StreamConfig, RD53Event, N_QCORES_HORIZONTAL, N_QCORES_VERTICAL, RD53Header, HitCoord
+from RD53BEvent import * #QuarterCore, Decoder, StreamConfig, Event, N_QCORES_HORIZONTAL, N_QCORES_VERTICAL, Header, HitCoord
 
 if __name__ == "__main__":
     try:
-        conf = Rd53StreamConfig()
+        conf = StreamConfig()
 
         conf.chip_id = True
         conf.l1id = True
@@ -28,9 +28,15 @@ if __name__ == "__main__":
             hits[(x, y)] = tot
             # input_hits.append(HitCoord(x, y, tot))
 
-        input_hits = [HitCoord(x, y, hits[(x, y)]) for (x, y) in hits]
+        # vec = HitCoordVector()
 
-        header = RD53Header()
+        # vec.
+
+        data = HitCoord((1, 4, 5))
+
+        input_hits = [(x, y, hits[(x, y)]) for (x, y) in hits]
+
+        header = Header()
 
         header.bcid = 1
         header.l1id = 56
@@ -38,10 +44,12 @@ if __name__ == "__main__":
         header.trigger_pos = 2
         header.chip_id = 2
 
-        event = RD53Event(conf, header, input_hits)
+        event = Event(conf, header, input_hits)
 
         encoded = event.serialize_event()
-        decoder = RD53Decoder(conf, encoded)
+
+        print(encoded)
+        decoder = Decoder(conf, encoded)
 
         decoder.process_stream()
 
@@ -49,11 +57,12 @@ if __name__ == "__main__":
 
         hit_decoded = events[0].get_hits()
 
-        print(hit_decoded)
+        print(type(hit_decoded[0]))
 
-        hit_decoded = {(hit.x, hit.y): hit.val for hit in hit_decoded}
-        input_hits = {(hit.x, hit.y): hit.val for hit in input_hits}
+        hit_decoded = {(x, y): val for (x, y, val) in hit_decoded}
+        input_hits = {(x, y): val for (x, y, val) in input_hits}
 
+        print("hekllo")
         assert hit_decoded == input_hits
 
     except AssertionError as e:

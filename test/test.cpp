@@ -40,7 +40,7 @@ int main()
         }
     }
 
-    Header header = {13, 1, 3, 200, 500};
+    StreamHeader header = {13, 1, 3, 200, 500};
 
     Event event(config, header, hits);
 

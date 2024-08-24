@@ -117,7 +117,7 @@ namespace RD53B
         std::string as_str() const
         {
             std::stringstream ss;
-            ss << "size_qcore_vertical: " << size_qcore_vertical << ", size_qcore_horizontal: " << size_qcore_horizontal
+            ss << "size_qcore_vertical: " << static_cast<int>(size_qcore_vertical) << ", size_qcore_horizontal: " << static_cast<int>(size_qcore_horizontal)
                << ", chip_id: " << std::boolalpha << chip_id << ", drop_tot: " << std::boolalpha << drop_tot
                << ", compressed_hitmap: " << std::boolalpha << compressed_hitmap << ", eos_marker: " << std::boolalpha
                << eos_marker << ", bcid: " << std::boolalpha << bcid << ", l1id: " << std::boolalpha << l1id

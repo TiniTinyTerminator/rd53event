@@ -1,3 +1,4 @@
+from copy import deepcopy
 import random
 import sys
 import os
@@ -43,19 +44,32 @@ if __name__ == "__main__":
         header.trigger_pos = 2
         header.chip_id = 2
 
+        header2 = StreamHeader()
+
+        header2 = header
+
+        print(header, header2)
+
         event = Event(conf, header, input_hits)
 
         qcores = event.get_qcores()
 
+        print("hello")
+
+        # print(qcores)
+
+
         qcores = RD53BEvent.QcoreVector(qcores)
 
-        other_event = Event(conf,header,qcores)
+        print(qcores)
+
+        other_event = Event(conf,header2,qcores)
 
         print(other_event.get_hits())
 
         encoded = event.serialize_event()
 
-        print(encoded)
+        # print(encoded)
         decoder = Decoder(conf, encoded)
 
 
@@ -69,7 +83,7 @@ if __name__ == "__main__":
         hit_decoded = {(x, y): val for (x, y, val) in hit_decoded}
         input_hits = {(x, y): val for (x, y, val) in input_hits}
 
-        print(input_hits)
+        # print(input_hits)
 
         assert hit_decoded == input_hits
 

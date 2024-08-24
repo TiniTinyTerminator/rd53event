@@ -15,7 +15,7 @@ Event::Event(const StreamConfig &config, const StreamHeader &header, std::vector
     // update address of config in qcores
     for (auto &qcore : qcores)
     {
-        qcore.set_config(config);
+        qcore.set_config(&config);
     }
 }
 
@@ -23,7 +23,7 @@ Event::Event(const Event &other) : config(other.config), header(other.header), h
 {
     for (auto &qcore : qcores)
     {
-        qcore.set_config(config);
+        qcore.set_config(&config);
     }
 }
 
@@ -34,7 +34,7 @@ Event &Event::operator=(const Event &other)
 
     for (auto &qcore : qcores)
     {
-        qcore.set_config(config);
+        qcore.set_config(&config);
     }
 
     return *this;

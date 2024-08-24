@@ -335,7 +335,7 @@ namespace RD53B
          *
          * @param config The StreamConfig object
          */
-        void set_config(const StreamConfig &config) { this->config = &config; }
+        void set_config(const StreamConfig *config) { this->config = config; }
 
         /**
          * @brief Gets the StreamConfig object
@@ -432,6 +432,15 @@ namespace RD53B
         {
             if (qcores.empty())
                 _get_qcores_from_pixelframe();
+
+            std::vector<QuarterCore> output = qcores;
+
+            for (size_t i = 0; i < output.size(); i++)
+            {
+                output[i].set_config(nullptr);
+            }
+            
+
             return qcores;
         }
 

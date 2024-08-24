@@ -254,8 +254,9 @@ uint8_t QuarterCore::hit_index(uint8_t col, uint8_t row) const
 {
     if (config == nullptr)
         throw std::runtime_error("ERROR: QuarterCore has no config");
+
     if (col >= config->size_qcore_horizontal || row >= config->size_qcore_vertical)
-        throw std::runtime_error("coordinates (" + std::to_string(col) + ", " + std::to_string(row) + ") out of bounds");
+        throw std::runtime_error("coordinates (" + std::to_string(col) + ", " + std::to_string(row) + ") out of bounds (" + std::to_string(config->size_qcore_horizontal) + ", " + std::to_string(config->size_qcore_vertical) + ")");
 
     if (config->size_qcore_vertical == 2 && config->size_qcore_horizontal == 8)
     {

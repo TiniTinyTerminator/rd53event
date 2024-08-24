@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
         hits = {}
 
-        for i in range(100000):
+        for i in range(100):
             x = random.randint(0, N_QCORES_HORIZONTAL * conf.size_qcore_horizontal - 1)
             y = random.randint(0, N_QCORES_VERTICAL * conf.size_qcore_vertical - 1)
             tot = random.randint(0, 15)

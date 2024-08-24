@@ -10,7 +10,7 @@ QuarterCore::QuarterCore(const StreamConfig &config, uint8_t col, uint8_t row)
 {
 }
 
-QuarterCore::QuarterCore(const StreamConfig &config, uint8_t col, uint8_t row)
+QuarterCore::QuarterCore(uint8_t col, uint8_t row)
     : config(nullptr), col_(col), row_(row), is_last_(false), is_neighbour_(false), is_last_in_event_(false), hits_(0), tots_(0)
 {
 }

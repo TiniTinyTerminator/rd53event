@@ -78,9 +78,8 @@ namespace RD53B
         uint16_t l1id;
 
         StreamHeader(uint8_t trigger_tag = 0, uint8_t trigger_pos = 0, uint8_t chip_id = 0, uint16_t bcid = 0, uint16_t l1id = 0)
-            : trigger_tag{trigger_tag}, trigger_pos{trigger_pos}, chip_id{chip_id}, bcid{bcid}, l1id{l1id}
-        {
-        }
+            : trigger_tag(trigger_tag), trigger_pos(trigger_pos), chip_id(chip_id), bcid(bcid), l1id(l1id)
+        {}
 
         std::string as_str() const
         {

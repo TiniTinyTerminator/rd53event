@@ -10,6 +10,11 @@ QuarterCore::QuarterCore(const StreamConfig &config, uint8_t col, uint8_t row)
 {
 }
 
+QuarterCore::QuarterCore(const StreamConfig &config, uint8_t col, uint8_t row)
+    : config(nullptr), col_(col), row_(row), is_last_(false), is_neighbour_(false), is_last_in_event_(false), hits_(0), tots_(0)
+{
+}
+
 std::pair<bool, uint8_t> QuarterCore::get_hit(uint8_t index) const
 {
     if (index >= 16)
@@ -54,6 +59,9 @@ std::pair<uint16_t, uint64_t> QuarterCore::get_hit_raw() const
 
 std::vector<HitCoord> QuarterCore::get_hit_vectors() const
 {
+    if (config == nullptr)
+        throw std::runtime_error("ERROR: QuarterCore has no config");
+
     std::vector<HitCoord> result;
     for (uint16_t x = 0; x < config->size_qcore_horizontal; ++x)
     {
@@ -72,6 +80,9 @@ std::vector<HitCoord> QuarterCore::get_hit_vectors() const
 
 std::vector<std::vector<std::pair<bool, uint8_t>>> QuarterCore::get_hit_map() const
 {
+    if (config == nullptr)
+        throw std::runtime_error("ERROR: QuarterCore has no config");
+
     std::vector<std::vector<std::pair<bool, uint8_t>>> hit_map(config->size_qcore_horizontal, std::vector<std::pair<bool, uint8_t>>(config->size_qcore_vertical));
 
     for (int x = 0; x < config->size_qcore_horizontal; ++x)
@@ -241,11 +252,11 @@ std::vector<std::tuple<uint8_t, unsigned long long, DataTags>> QuarterCore::seri
 
 uint8_t QuarterCore::hit_index(uint8_t col, uint8_t row) const
 {
+    if (config == nullptr)
+        throw std::runtime_error("ERROR: QuarterCore has no config");
     if (col >= config->size_qcore_horizontal || row >= config->size_qcore_vertical)
-    {
         throw std::runtime_error("coordinates (" + std::to_string(col) + ", " + std::to_string(row) + ") out of bounds");
-    }
-    
+
     if (config->size_qcore_vertical == 2 && config->size_qcore_horizontal == 8)
     {
         return 2 * col + row;
@@ -274,15 +285,18 @@ std::string QuarterCore::as_str() const
     str << std::left << "  Hits (raw): " << std::right << std::setw(10) << std::bitset<16>(hits_) << "\n";
     str << std::left << "  Tot Values: " << std::right << std::setw(10) << std::bitset<64>(tots_) << "\n";
 
-    auto hit_map = get_hit_map();
-    str << "  Hit Map:\n";
-    for (size_t x = 0; x < hit_map.size(); ++x)
+    if (config != nullptr)
     {
-        for (size_t y = 0; y < hit_map[x].size(); ++y)
+        auto hit_map = get_hit_map();
+        str << "  Hit Map:\n";
+        for (size_t x = 0; x < hit_map.size(); ++x)
         {
-            str << "\t(" << (hit_map[x][y].first ? "true " : "false") << ", " << std::setw(2) << static_cast<int>(hit_map[x][y].second) << ") ";
+            for (size_t y = 0; y < hit_map[x].size(); ++y)
+            {
+                str << "\t(" << (hit_map[x][y].first ? "true " : "false") << ", " << std::setw(2) << static_cast<int>(hit_map[x][y].second) << ") ";
+            }
+            str << "\n";
         }
-        str << "\n";
     }
 
     return str.str();

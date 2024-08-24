@@ -27,9 +27,10 @@ Event::Event(const Event &other) : config(other.config), header(other.header), h
     }
 }
 
-Event & Event::operator=(const Event &other)
+Event &Event::operator=(const Event &other)
 {
-    if (&other != this) *this = other;
+    if (&other != this)
+        *this = other;
 
     for (auto &qcore : qcores)
     {
@@ -38,7 +39,6 @@ Event & Event::operator=(const Event &other)
 
     return *this;
 }
-
 
 void Event::_get_qcores_from_pixelframe()
 {
@@ -250,9 +250,9 @@ std::string Event::as_str() const
     }
 
     // auto hits_data = get_hits();
-    for (const auto &hit : hits)
+    for (const auto [x, y, val] : hits)
     {
-        ss << "(" << hit.x << ", " << hit.y << ", " << hit.val << ")";
+        ss << "(" << x << ", " << y << ", " << val << ")";
     }
 
     return ss.str();

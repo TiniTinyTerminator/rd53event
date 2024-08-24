@@ -30,6 +30,15 @@ namespace RD53B
     using DataRead = std::pair<word_t, uint8_t>;
 
     /**
+     * @brief A type alias for a tuple of two 16-bit unsigned integers and an 8-bit unsigned integer
+     *
+     * This type alias represents the coordinates of a hit in a QuarterCore. The first element of the tuple is the column
+     * index, the second element is the row index, and the third element is the total value of the hit.
+     */
+    using HitCoord = std::tuple<uint16_t, uint16_t, uint8_t>;
+
+
+    /**
      * @brief A namespace containing constants representing the widths of different data fields in the RD53 event data stream
      */
     namespace data_widths
@@ -50,30 +59,6 @@ namespace RD53B
         constexpr uint8_t HITMAP_WIDTH = 16;
         /** @brief The width of the tot field */
         constexpr uint8_t TOT_WIDTH = 4;
-    };
-
-    struct HitCoord
-    {
-        uint16_t x;
-        uint16_t y;
-        uint8_t val;
-
-        HitCoord(uint16_t x = 0, uint16_t y = 0, uint8_t val = 0) : x(x), y(y), val(val) {}
-
-        std::string as_str() const
-        {
-            return "(" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(val) + ")";
-        }
-
-        bool operator==(const HitCoord &other) const
-        {
-            return x == other.x && y == other.y && val == other.val;
-        }
-
-        bool operator!=(const HitCoord &other) const
-        {
-            return !(*this == other);
-        }
     };
 
     /**
@@ -161,7 +146,7 @@ namespace RD53B
          */
         QuarterCore(const StreamConfig &config, uint8_t col = 0, uint8_t row = 0);
 
-        QuarterCore() = default;
+        QuarterCore(uint8_t col = 0, uint8_t row = 0);
 
         /**
          * @brief Returns the hit value at the specified column and row
@@ -591,7 +576,6 @@ namespace RD53B
          */
         inline void _new_event();
 
-        /** @brief The bit index of the event data stream */
         /**
          * @brief The bit index of the event data stream
          */

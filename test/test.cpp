@@ -30,10 +30,12 @@ int main()
         int x = std::rand() % (N_QCORES_HORIZONTAL * config.size_qcore_horizontal);
         int y = std::rand() % (N_QCORES_VERTICAL * config.size_qcore_vertical);
         int tot = (std::rand() + 1) % 16;
-        auto it = std::find_if(hits.begin(), hits.end(), [x, y](const auto& hit) {
-            return hit.x == x && hit.y == y;
-        });
-        
+        auto it = std::find_if(hits.begin(), hits.end(), [x, y](const auto &hit)
+                               {
+            
+            const auto [x_q, y_q, tot] = hit;
+            return x_q== x && y_q == y; });
+
         if (it == hits.end())
         {
             hits.push_back(HitCoord(x, y, tot));
@@ -66,15 +68,17 @@ int main()
     auto received_hits = decoder.get_events()[0].get_hits();
 
     std::sort(received_hits.begin(), received_hits.end(),
-             [](const auto& a, const auto& b) {
-                 return std::tie(a.x, a.y) <
-                        std::tie(b.x, b.y);
-             });
+              [](const auto &a, const auto &b)
+              {
+                  return std::get<0>(a) < std::get<0>(b) ||
+                         (std::get<0>(a) == std::get<0>(b) && std::get<1>(a) < std::get<1>(b));
+              });
     std::sort(hits.begin(), hits.end(),
-             [](const auto& a, const auto& b) {
-                 return std::tie(a.x, a.y) <
-                        std::tie(b.x, b.y);
-             });
+              [](const auto &a, const auto &b)
+              {
+                  return std::get<0>(a) < std::get<0>(b) ||
+                         (std::get<0>(a) == std::get<0>(b) && std::get<1>(a) < std::get<1>(b));
+              });
 
     for (size_t i = 0; i < received_hits.size(); ++i)
     {

@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
         hits = {}
 
-        for i in range(10):
+        for i in range(100000):
             x = random.randint(0, N_QCORES_HORIZONTAL * conf.size_qcore_horizontal - 1)
             y = random.randint(0, N_QCORES_VERTICAL * conf.size_qcore_vertical - 1)
             tot = random.randint(0, 15)
@@ -32,11 +32,9 @@ if __name__ == "__main__":
 
         # vec.
 
-        data = HitCoord((1, 4, 5))
-
         input_hits = [(x, y, hits[(x, y)]) for (x, y) in hits]
 
-        header = Header()
+        header = StreamHeader()
 
         header.bcid = 1
         header.l1id = 56
@@ -57,12 +55,11 @@ if __name__ == "__main__":
 
         hit_decoded = events[0].get_hits()
 
-        print(type(hit_decoded[0]))
-
         hit_decoded = {(x, y): val for (x, y, val) in hit_decoded}
         input_hits = {(x, y): val for (x, y, val) in input_hits}
 
-        print("hekllo")
+        print(input_hits)
+
         assert hit_decoded == input_hits
 
     except AssertionError as e:

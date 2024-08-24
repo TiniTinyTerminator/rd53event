@@ -32,9 +32,12 @@
 // Typemap to convert RD53B::HitCoord object into a Python tuple
 %typemap(out) RD53B::HitCoord {
     $result = PyTuple_New(3);
-    PyTuple_SetItem($result, 0, PyLong_FromUnsignedLong($1.x));
-    PyTuple_SetItem($result, 1, PyLong_FromUnsignedLong($1.y));
-    PyTuple_SetItem($result, 2, PyLong_FromUnsignedLong($1.val));
+
+    const auto [x,y,tot] = $1;
+
+    PyTuple_SetItem($result, 0, PyLong_FromUnsignedLong(x));
+    PyTuple_SetItem($result, 1, PyLong_FromUnsignedLong(y));
+    PyTuple_SetItem($result, 2, PyLong_FromUnsignedLong(tot));
 }
 
 // Typemap to convert a vector of RD53B::HitCoord objects into a Python list of tuples
@@ -42,9 +45,12 @@
     $result = PyList_New($1.size());
     for (size_t i = 0; i < $1.size(); ++i) {
         PyObject* tuple = PyTuple_New(3);
-        PyTuple_SetItem(tuple, 0, PyLong_FromUnsignedLong($1.at(i).x));
-        PyTuple_SetItem(tuple, 1, PyLong_FromUnsignedLong($1.at(i).y));
-        PyTuple_SetItem(tuple, 2, PyLong_FromUnsignedLong($1.at(i).val));
+
+        const auto [x,y,tot] = $1.at(i);
+
+        PyTuple_SetItem(tuple, 0, PyLong_FromUnsignedLong(x));
+        PyTuple_SetItem(tuple, 1, PyLong_FromUnsignedLong(y));
+        PyTuple_SetItem(tuple, 2, PyLong_FromUnsignedLong(tot));
         PyList_SetItem($result, i, tuple);
     }
 }

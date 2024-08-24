@@ -5,6 +5,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'RD53BEvent')))
 
 from RD53BEvent import * #QuarterCore, Decoder, StreamConfig, Event, N_QCORES_HORIZONTAL, N_QCORES_VERTICAL, Header, HitCoord
+import RD53BEvent
 
 if __name__ == "__main__":
     try:
@@ -44,10 +45,20 @@ if __name__ == "__main__":
 
         event = Event(conf, header, input_hits)
 
+        qcores = event.get_qcores()
+
+        qcores = RD53BEvent.QcoreVector(qcores)
+
+        other_event = Event(conf,header,qcores)
+
+        print(other_event.get_hits())
+
         encoded = event.serialize_event()
 
         print(encoded)
         decoder = Decoder(conf, encoded)
+
+
 
         decoder.process_stream()
 

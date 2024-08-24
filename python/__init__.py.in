@@ -1,1 +1,1 @@
-from .RD53BEvent import Event, StreamConfig, Decoder, StreamHeader, QuarterCore, N_QCORES_HORIZONTAL, N_QCORES_VERTICAL
+from .RD53BEvent import Event, StreamConfig, Decoder, StreamHeader, QuarterCore, N_QCORES_HORIZONTAL, N_QCORES_VERTICAL, EventVector, QcoreVector, QcoreRawData

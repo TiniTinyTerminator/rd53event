@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
         hits = {}
 
-        for i in range(100):
+        for i in range(1):
             x = random.randint(0, N_QCORES_HORIZONTAL * conf.size_qcore_horizontal - 1)
             y = random.randint(0, N_QCORES_VERTICAL * conf.size_qcore_vertical - 1)
             tot = random.randint(0, 15)
@@ -52,16 +52,14 @@ if __name__ == "__main__":
 
         event = Event(conf, header, input_hits)
 
-        qcores = event.get_qcores()
+        qcores = RD53BEvent.QcoreVector(event.get_qcores())
 
         print("hello")
 
-        # print(qcores)
-
-
-        qcores = RD53BEvent.QcoreVector(qcores)
-
         print(qcores)
+
+
+        print(qcores[0])
 
         other_event = Event(conf,header2,qcores)
 

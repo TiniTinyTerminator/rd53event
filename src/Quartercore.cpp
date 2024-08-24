@@ -63,9 +63,9 @@ std::vector<HitCoord> QuarterCore::get_hit_vectors() const
         throw std::runtime_error("ERROR: QuarterCore has no config");
 
     std::vector<HitCoord> result;
-    for (uint16_t x = 0; x < config->size_qcore_horizontal; ++x)
+    for (uint8_t x = 0; x < config->size_qcore_horizontal; x++)
     {
-        for (uint16_t y = 0; y < config->size_qcore_vertical; ++y)
+        for (uint8_t y = 0; y < config->size_qcore_vertical; y++)
         {
             auto [h, tot] = get_hit(x, y);
 
@@ -85,9 +85,9 @@ std::vector<std::vector<std::pair<bool, uint8_t>>> QuarterCore::get_hit_map() co
 
     std::vector<std::vector<std::pair<bool, uint8_t>>> hit_map(config->size_qcore_horizontal, std::vector<std::pair<bool, uint8_t>>(config->size_qcore_vertical));
 
-    for (int x = 0; x < config->size_qcore_horizontal; ++x)
+    for (uint8_t x = 0; x < config->size_qcore_horizontal; x++)
     {
-        for (int y = 0; y < config->size_qcore_vertical; ++y)
+        for (uint8_t y = 0; y < config->size_qcore_vertical; y++)
         {
             uint8_t index = hit_index(y, x);
             hit_map[x][y] = {hits_ >> index & 0x1, tots_ >> (index * 4) & 0xF};
@@ -286,19 +286,19 @@ std::string QuarterCore::as_str() const
     str << std::left << "  Hits (raw): " << std::right << std::setw(10) << std::bitset<16>(hits_) << "\n";
     str << std::left << "  Tot Values: " << std::right << std::setw(10) << std::bitset<64>(tots_) << "\n";
 
-    if (config != nullptr)
-    {
-        auto hit_map = get_hit_map();
-        str << "  Hit Map:\n";
-        for (size_t x = 0; x < hit_map.size(); ++x)
-        {
-            for (size_t y = 0; y < hit_map[x].size(); ++y)
-            {
-                str << "\t(" << (hit_map[x][y].first ? "true " : "false") << ", " << std::setw(2) << static_cast<int>(hit_map[x][y].second) << ") ";
-            }
-            str << "\n";
-        }
-    }
+    // if (config != nullptr)
+    // {
+    //     auto hit_map = get_hit_map();
+    //     str << "  Hit Map:\n";
+    //     for (size_t x = 0; x < hit_map.size(); ++x)
+    //     {
+    //         for (size_t y = 0; y < hit_map[x].size(); ++y)
+    //         {
+    //             str << "\t(" << (hit_map[x][y].first ? "true " : "false") << ", " << std::setw(2) << static_cast<int>(hit_map[x][y].second) << ") ";
+    //         }
+    //         str << "\n";
+    //     }
+    // }
 
     return str.str();
 }

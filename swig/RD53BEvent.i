@@ -18,7 +18,6 @@
 
 namespace std {
     %template(EventVector) vector<RD53B::Event>;
-    %template(QcoreVector) vector<RD53B::QuarterCore>;
     %template(QcoreRawData) pair<uint16_t, uint64_t>;
 }
 

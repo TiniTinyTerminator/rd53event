@@ -1,7 +1,12 @@
 
 %{
     #include "RD53BEvent.h"
+
 %}
+
+%include "std_vector.i"
+
+%template(QcoreVector) std::vector<RD53B::QuarterCore>;
 
 %extend RD53B::Event {
     Event(const StreamConfig &config, const StreamHeader &header, PyObject *object) {

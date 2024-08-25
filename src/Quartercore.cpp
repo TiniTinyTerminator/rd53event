@@ -2,6 +2,7 @@
 
 #include <bitset>
 #include <iomanip>
+#include <fstream>
 
 using namespace RD53B;
 
@@ -286,19 +287,19 @@ std::string QuarterCore::as_str() const
     str << std::left << "  Hits (raw): " << std::right << std::setw(10) << std::bitset<16>(hits_) << "\n";
     str << std::left << "  Tot Values: " << std::right << std::setw(10) << std::bitset<64>(tots_) << "\n";
 
-    // if (config != nullptr)
-    // {
-    //     auto hit_map = get_hit_map();
-    //     str << "  Hit Map:\n";
-    //     for (size_t x = 0; x < hit_map.size(); ++x)
-    //     {
-    //         for (size_t y = 0; y < hit_map[x].size(); ++y)
-    //         {
-    //             str << "\t(" << (hit_map[x][y].first ? "true " : "false") << ", " << std::setw(2) << static_cast<int>(hit_map[x][y].second) << ") ";
-    //         }
-    //         str << "\n";
-    //     }
-    // }
+    if (config != nullptr)
+    {
+        auto hit_map = get_hit_map();
+        str << "  Hit Map:\n";
+        for (size_t x = 0; x < hit_map.size(); ++x)
+        {
+            for (size_t y = 0; y < hit_map[x].size(); ++y)
+            {
+                str << "\t(" << (hit_map[x][y].first ? "true " : "false") << ", " << std::setw(2) << static_cast<int>(hit_map[x][y].second) << ") ";
+            }
+            str << "\n";
+        }
+    }
 
     return str.str();
 }

@@ -10,6 +10,7 @@
 #include <memory>
 #include <sstream>
 #include <cstdint>
+#include <fstream>
 
 #include "utils.h"
 
@@ -36,7 +37,6 @@ namespace RD53B
      * index, the second element is the row index, and the third element is the total value of the hit.
      */
     using HitCoord = std::tuple<uint16_t, uint16_t, uint8_t>;
-
 
     /**
      * @brief A namespace containing constants representing the widths of different data fields in the RD53 event data stream
@@ -79,7 +79,8 @@ namespace RD53B
 
         StreamHeader(uint8_t trigger_tag = 0, uint8_t trigger_pos = 0, uint8_t chip_id = 0, uint16_t bcid = 0, uint16_t l1id = 0)
             : trigger_tag(trigger_tag), trigger_pos(trigger_pos), chip_id(chip_id), bcid(bcid), l1id(l1id)
-        {}
+        {
+        }
 
         std::string as_str() const
         {
@@ -108,8 +109,8 @@ namespace RD53B
         int events_per_stream; // unused at the moment
 
         StreamConfig(int qcore_vertical = 4, int qcore_horizontal = 4, bool _chip_id = false, bool _drop_tot = false,
-                         bool _compressed_hitmap = false, bool _eos_marker = false, bool _bcid = false, bool _l1id = false,
-                         int _events_per_stream = 0)
+                     bool _compressed_hitmap = false, bool _eos_marker = false, bool _bcid = false, bool _l1id = false,
+                     int _events_per_stream = 0)
             : size_qcore_vertical(qcore_vertical), size_qcore_horizontal(qcore_horizontal), chip_id(_chip_id), drop_tot(_drop_tot), compressed_hitmap(_compressed_hitmap), eos_marker(_eos_marker), bcid(_bcid), l1id(_l1id), events_per_stream(_events_per_stream)
         {
         }
@@ -439,7 +440,6 @@ namespace RD53B
             {
                 output[i].set_config(nullptr);
             }
-            
 
             return qcores;
         }

@@ -1,16 +1,16 @@
 #include "RD53BEvent.h"
 
 #include <bitset>
+#include <fstream>
 
 using namespace RD53B;
 
-Event::Event(const StreamConfig &config, const StreamHeader &header, const std::vector<HitCoord> &hits)
-    : config(config), header(header), hits(hits)
-{
-}
+Event::Event(const StreamConfig &config_, const StreamHeader &header_, const std::vector<HitCoord> &hits_)
+    : config(config_), header(header_), hits(hits_)
+{}
 
-Event::Event(const StreamConfig &config, const StreamHeader &header, std::vector<QuarterCore> &qcores)
-    : config(config), header(header), qcores(qcores)
+Event::Event(const StreamConfig &config_, const StreamHeader &header_, std::vector<QuarterCore> &qcores_)
+    : config(config_), header(header_), qcores(qcores_)
 {
     // update address of config in qcores
     for (auto &qcore : qcores)

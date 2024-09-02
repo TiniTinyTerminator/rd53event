@@ -6,13 +6,13 @@
 
 using namespace RD53B;
 
-QuarterCore::QuarterCore(const StreamConfig &config, uint8_t col, uint8_t row)
-    : config(&config), col_(col), row_(row), is_last_(false), is_neighbour_(false), is_last_in_event_(false), hits_(0), tots_(0)
+QuarterCore::QuarterCore(const StreamConfig &config, uint8_t col_, uint8_t row_)
+    : config_(&config), col_(col_), row_(row_), is_last_(false), is_neighbour_(false), is_last_in_event_(false), hits_(0), tots_(0)
 {
 }
 
-QuarterCore::QuarterCore(uint8_t col, uint8_t row)
-    : config(nullptr), col_(col), row_(row), is_last_(false), is_neighbour_(false), is_last_in_event_(false), hits_(0), tots_(0)
+QuarterCore::QuarterCore(uint8_t col_, uint8_t row_)
+    : config_(nullptr), col_(col_), row_(row_), is_last_(false), is_neighbour_(false), is_last_in_event_(false), hits_(0), tots_(0)
 {
 }
 
@@ -60,13 +60,13 @@ std::pair<uint16_t, uint64_t> QuarterCore::get_hit_raw() const
 
 std::vector<HitCoord> QuarterCore::get_hit_vectors() const
 {
-    if (config == nullptr)
+    if (config_ == nullptr)
         throw std::runtime_error("ERROR: QuarterCore has no config");
 
     std::vector<HitCoord> result;
-    for (uint8_t x = 0; x < config->size_qcore_horizontal; x++)
+    for (uint8_t x = 0; x < config_->size_qcore_horizontal; x++)
     {
-        for (uint8_t y = 0; y < config->size_qcore_vertical; y++)
+        for (uint8_t y = 0; y < config_->size_qcore_vertical; y++)
         {
             auto [h, tot] = get_hit(x, y);
 
@@ -81,14 +81,14 @@ std::vector<HitCoord> QuarterCore::get_hit_vectors() const
 
 std::vector<std::vector<std::pair<bool, uint8_t>>> QuarterCore::get_hit_map() const
 {
-    if (config == nullptr)
+    if (config_ == nullptr)
         throw std::runtime_error("ERROR: QuarterCore has no config");
 
-    std::vector<std::vector<std::pair<bool, uint8_t>>> hit_map(config->size_qcore_horizontal, std::vector<std::pair<bool, uint8_t>>(config->size_qcore_vertical));
+    std::vector<std::vector<std::pair<bool, uint8_t>>> hit_map(config_->size_qcore_horizontal, std::vector<std::pair<bool, uint8_t>>(config_->size_qcore_vertical));
 
-    for (uint8_t x = 0; x < config->size_qcore_horizontal; x++)
+    for (uint8_t x = 0; x < config_->size_qcore_horizontal; x++)
     {
-        for (uint8_t y = 0; y < config->size_qcore_vertical; y++)
+        for (uint8_t y = 0; y < config_->size_qcore_vertical; y++)
         {
             uint8_t index = hit_index(y, x);
             hit_map[x][y] = {hits_ >> index & 0x1, tots_ >> (index * 4) & 0xF};
@@ -229,11 +229,11 @@ std::vector<std::tuple<uint8_t, unsigned long long, DataTags>> QuarterCore::seri
         qcore_data.push_back(std::make_tuple(8, row_, DataTags::ROW));
     }
 
-    auto [bintree, bintree_length] = config->compressed_hitmap ? get_binary_tree() : std::make_pair<int, int>(std::get<0>(get_hit_raw()), 16);
+    auto [bintree, bintree_length] = config_->compressed_hitmap ? get_binary_tree() : std::make_pair<int, int>(std::get<0>(get_hit_raw()), 16);
 
     qcore_data.push_back(std::make_tuple(bintree_length, bintree, DataTags::HITMAP));
 
-    if (!config->drop_tot)
+    if (!config_->drop_tot)
     {
 
         for (int8_t i = 15; i >= 0; i--)
@@ -253,23 +253,23 @@ std::vector<std::tuple<uint8_t, unsigned long long, DataTags>> QuarterCore::seri
 
 uint8_t QuarterCore::hit_index(uint8_t col, uint8_t row) const
 {
-    if (config == nullptr)
+    if (config_ == nullptr)
         throw std::runtime_error("ERROR: QuarterCore has no config");
 
-    if (col >= config->size_qcore_horizontal || row >= config->size_qcore_vertical)
-        throw std::runtime_error("coordinates (" + std::to_string(col) + ", " + std::to_string(row) + ") out of bounds (" + std::to_string(config->size_qcore_horizontal) + ", " + std::to_string(config->size_qcore_vertical) + ")");
+    if (col >= config_->size_qcore_horizontal || row >= config_->size_qcore_vertical)
+        throw std::runtime_error("coordinates (" + std::to_string(col) + ", " + std::to_string(row) + ") out of bounds (" + std::to_string(config_->size_qcore_horizontal) + ", " + std::to_string(config_->size_qcore_vertical) + ")");
 
-    if (config->size_qcore_vertical == 2 && config->size_qcore_horizontal == 8)
+    if (config_->size_qcore_vertical == 2 && config_->size_qcore_horizontal == 8)
     {
         return 2 * col + row;
     }
-    else if (config->size_qcore_vertical == 4 && config->size_qcore_horizontal == 4)
+    else if (config_->size_qcore_vertical == 4 && config_->size_qcore_horizontal == 4)
     {
         return row > 1 ? 8 + col * 2 + row - 2 : col * 2 + row;
     }
     else
     {
-        throw std::runtime_error("ERROR: Wrong qcore size: " + std::to_string(config->size_qcore_horizontal) + " x " + std::to_string(config->size_qcore_vertical));
+        throw std::runtime_error("ERROR: Wrong qcore size: " + std::to_string(config_->size_qcore_horizontal) + " x " + std::to_string(config_->size_qcore_vertical));
     }
 }
 
@@ -287,7 +287,7 @@ std::string QuarterCore::as_str() const
     str << std::left << "  Hits (raw): " << std::right << std::setw(10) << std::bitset<16>(hits_) << "\n";
     str << std::left << "  Tot Values: " << std::right << std::setw(10) << std::bitset<64>(tots_) << "\n";
 
-    if (config != nullptr)
+    if (config_ != nullptr)
     {
         auto hit_map = get_hit_map();
         str << "  Hit Map:\n";

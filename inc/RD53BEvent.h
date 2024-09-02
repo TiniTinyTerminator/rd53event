@@ -336,14 +336,14 @@ namespace RD53B
          *
          * @param config The StreamConfig object
          */
-        void set_config(const StreamConfig *config) { this->config = config; }
+        void set_config(const StreamConfig *config) { this->config_ = config; }
 
         /**
          * @brief Gets the StreamConfig object
          *
          * @return The StreamConfig object
          */
-        StreamConfig get_config() const { return *config; }
+        StreamConfig get_config() const { return *config_; }
 
         /**
          * @brief Returns a string representation of the QuarterCore object
@@ -357,7 +357,7 @@ namespace RD53B
     private:
         // Member variables
         /** The StreamConfig object that contains the configuration parameters */
-        const StreamConfig *config;
+        const StreamConfig *config_;
         /** The column index of the quarter core */
         uint8_t col_;
         /** The row index of the quarter core */
@@ -431,17 +431,17 @@ namespace RD53B
          */
         std::vector<QuarterCore> get_qcores()
         {
-            if (qcores.empty())
+            if (qcores_.empty())
                 _get_qcores_from_pixelframe();
 
-            std::vector<QuarterCore> output = qcores;
+            std::vector<QuarterCore> output = qcores_;
 
             for (size_t i = 0; i < output.size(); i++)
             {
                 output[i].set_config(nullptr);
             }
 
-            return qcores;
+            return qcores_;
         }
 
         /**
@@ -453,9 +453,9 @@ namespace RD53B
          */
         std::vector<HitCoord> get_hits()
         {
-            if (hits.empty())
+            if (hits_.empty())
                 _get_pixelframe_from_qcores();
-            return hits;
+            return hits_;
         }
 
         /**
@@ -467,10 +467,10 @@ namespace RD53B
 
     private:
         /** The vector of hits in the event */
-        std::vector<HitCoord> hits;
+        std::vector<HitCoord> hits_;
 
         /** The vector of QuarterCore objects representing the quarter cores in the event */
-        std::vector<QuarterCore> qcores;
+        std::vector<QuarterCore> qcores_;
 
         /**
          * @brief Retrieves the quarter core data in the event
@@ -587,45 +587,45 @@ namespace RD53B
         /**
          * @brief The bit index of the event data stream
          */
-        size_t bit_index;
+        size_t bit_index_;
 
         /**
          * @brief The jump size of the event data stream
          */
-        size_t jump_size;
+        size_t jump_size_;
 
         /**
          * @brief The size of a word in bits
          */
-        uint8_t word_size;
+        uint8_t word_size_;
 
         /**
          * @brief The size of the meta data in bits
          */
-        uint8_t word_meta_size;
+        uint8_t word_meta_size_;
 
         /** @brief The event data stream */
-        std::vector<word_t> stream;
+        std::vector<word_t> stream_;
 
         /** @brief The StreamConfig object containing the configuration parameters */
-        const StreamConfig config;
+        const StreamConfig config_;
 
         /** @brief The vector of pairs representing the events in the event data stream */
         using EventVec = std::vector<std::pair<StreamHeader, std::vector<QuarterCore>>>;
 
         /** @brief The vector of pairs representing the events in the event data stream */
-        EventVec events;
+        EventVec events_;
 
         /** @brief An iterator pointing to the current event in the events vector */
-        EventVec::iterator current_event;
+        EventVec::iterator current_event_;
 
         /** @brief A pointer to the header of the current event */
-        StreamHeader *current_header;
+        StreamHeader *current_header_;
 
         /** @brief A pointer to the vector of QuarterCore objects of the current event */
-        std::vector<QuarterCore> *current_qcores;
+        std::vector<QuarterCore> *current_qcores_;
 
-        QuarterCore qc;
+        QuarterCore qc_;
     };
 
 };

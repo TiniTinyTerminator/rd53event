@@ -6,22 +6,22 @@
 using namespace RD53B;
 
 Event::Event(const StreamConfig &config_, const StreamHeader &header_, const std::vector<HitCoord> &hits_)
-    : config(config_), header(header_), hits(hits_)
+    : config(config_), header(header_), hits_(hits_)
 {}
 
 Event::Event(const StreamConfig &config_, const StreamHeader &header_, std::vector<QuarterCore> &qcores_)
-    : config(config_), header(header_), qcores(qcores_)
+    : config(config_), header(header_), qcores_(qcores_)
 {
     // update address of config in qcores
-    for (auto &qcore : qcores)
+    for (auto &qcore : qcores_)
     {
         qcore.set_config(&config);
     }
 }
 
-Event::Event(const Event &other) : config(other.config), header(other.header), hits(other.hits), qcores(other.qcores)
+Event::Event(const Event &other) : config(other.config), header(other.header), hits_(other.hits_), qcores_(other.qcores_)
 {
-    for (auto &qcore : qcores)
+    for (auto &qcore : qcores_)
     {
         qcore.set_config(&config);
     }
@@ -32,7 +32,7 @@ Event &Event::operator=(const Event &other)
     if (&other != this)
         *this = other;
 
-    for (auto &qcore : qcores)
+    for (auto &qcore : qcores_)
     {
         qcore.set_config(&config);
     }
@@ -42,14 +42,14 @@ Event &Event::operator=(const Event &other)
 
 void Event::_get_qcores_from_pixelframe()
 {
-    if (!qcores.empty())
+    if (!qcores_.empty())
         throw std::runtime_error("QuarterCores already set in event");
-    if (hits.empty())
+    if (hits_.empty())
         throw std::runtime_error("No hits in event");
 
     std::map<std::pair<int, int>, QuarterCore> qcore_dict;
 
-    for (const auto &[x, y, tot] : hits)
+    for (const auto &[x, y, tot] : hits_)
     {
         int col_in_qcore = x % config.size_qcore_horizontal;
         int qcol = (x - col_in_qcore) / config.size_qcore_horizontal;
@@ -92,34 +92,34 @@ void Event::_get_qcores_from_pixelframe()
             qcore.set_is_neighbour(key.first == prev_key.first && key.second == prev_key.second + 1);
         }
 
-        qcores.push_back(qcore);
+        qcores_.push_back(qcore);
     }
 }
 
 void Event::_get_pixelframe_from_qcores()
 {
-    if (!hits.empty())
+    if (!hits_.empty())
         throw std::runtime_error("Hits already set in event");
-    if (qcores.empty())
+    if (qcores_.empty())
         throw std::runtime_error("No qcores in event");
 
-    hits = {};
+    hits_ = {};
 
-    for (auto &qcore : qcores)
+    for (auto &qcore : qcores_)
     {
         auto qcore_coords = qcore.get_hit_vectors();
         auto col = qcore.get_col(), row = qcore.get_row();
 
         for (auto &&[x, y, tot] : qcore_coords)
         {
-            hits.push_back(HitCoord(x + col * config.size_qcore_horizontal, y + row * config.size_qcore_vertical, tot));
+            hits_.push_back(HitCoord(x + col * config.size_qcore_horizontal, y + row * config.size_qcore_vertical, tot));
         }
     }
 }
 
 std::vector<word_t> Event::serialize_event()
 {
-    if (qcores.empty())
+    if (qcores_.empty())
         _get_qcores_from_pixelframe();
 
     auto packets = _retrieve_qcore_data();
@@ -225,7 +225,7 @@ std::vector<std::tuple<uint8_t, unsigned long long, DataTags>> Event::_retrieve_
     bool prev_last_in_col = true;
     std::vector<std::tuple<uint8_t, unsigned long long, DataTags>> qcore_packages;
 
-    for (const auto &qcore : qcores)
+    for (const auto &qcore : qcores_)
     {
         auto qcore_data = qcore.serialize_qcore(prev_last_in_col);
         qcore_packages.insert(qcore_packages.end(), qcore_data.begin(), qcore_data.end());
@@ -244,13 +244,13 @@ std::string Event::as_str() const
     ss << "header: " << header.as_str() << std::endl;
 
     // auto qcores_data = get_qcores();
-    for (const auto &qcore : qcores)
+    for (const auto &qcore : qcores_)
     {
         ss << qcore.as_str() << std::endl;
     }
 
     // auto hits_data = get_hits();
-    for (const auto [x, y, val] : hits)
+    for (const auto [x, y, val] : hits_)
     {
         ss << "(" << x << ", " << y << ", " << val << ")";
     }

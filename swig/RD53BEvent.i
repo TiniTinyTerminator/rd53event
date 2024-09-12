@@ -32,6 +32,6 @@ namespace std {
 %include "streamVector.i"
 %include "event.i"
 
-%include "prints.i"
+// %include "prints.i"
 
 %include "RD53BEvent.h"

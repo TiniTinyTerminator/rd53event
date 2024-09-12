@@ -322,7 +322,7 @@ void Decoder::_get_hitmap()
                     if (DEBUG)
                         std::cout << std::bitset<2>(hitpair) << std::endl;
 
-                    hit_raw |= (((hitpair & 0b01) << 1) | ((hitpair & 0b10) >> 1)) << j * 4 + k * 2 + i * 8;
+                    hit_raw |= (((hitpair & 0b01) << 1) | ((hitpair & 0b10) >> 1)) << (j * 4 + k * 2 + i * 8);
 
                     bit_index_ += read_bits;
                 }

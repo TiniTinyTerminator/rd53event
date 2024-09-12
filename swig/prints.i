@@ -10,7 +10,7 @@
 }
 %enddef
 
-%STR_REPR_EXTEND(RD53B::QuarterCore)
-%STR_REPR_EXTEND(RD53B::Event)
-%STR_REPR_EXTEND(RD53B::StreamHeader)
-%STR_REPR_EXTEND(RD53B::StreamConfig)
+%STR_REPR_EXTEND(RD53::QuarterCore)
+%STR_REPR_EXTEND(RD53::Event)
+%STR_REPR_EXTEND(RD53::StreamHeader)
+%STR_REPR_EXTEND(RD53::StreamConfig)

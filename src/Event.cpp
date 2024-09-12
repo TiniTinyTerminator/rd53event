@@ -1,9 +1,9 @@
-#include "RD53BEvent.h"
+#include "RD53Event.h"
 
 #include <bitset>
 #include <fstream>
 
-using namespace RD53B;
+using namespace RD53;
 
 Event::Event(const StreamConfig &config_, const StreamHeader &header_, const std::vector<HitCoord> &hits_)
     : config(config_), header(header_), hits_(hits_)

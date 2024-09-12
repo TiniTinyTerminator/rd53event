@@ -1,11 +1,11 @@
-#include "RD53BEvent.h"
+#include "RD53Event.h"
 
 #include <iostream>
 #include <bitset>
 #include <ctime>
 #include <cassert>
 
-using namespace RD53B;
+using namespace RD53;
 
 int main()
 {
@@ -24,24 +24,14 @@ int main()
 
     std::srand(std::time(nullptr));
 
-    // Generate random points
-    for (int i = 0; i < 500; i++)
+    for (int i = 0; i < RD53::N_QCORES_HORIZONTAL * config.size_qcore_horizontal; i++)
     {
-        int x = std::rand() % (N_QCORES_HORIZONTAL * config.size_qcore_horizontal);
-        int y = std::rand() % (N_QCORES_VERTICAL * config.size_qcore_vertical);
-        int tot = (std::rand() + 1) % 16;
-        auto it = std::find_if(hits.begin(), hits.end(), [x, y](const auto &hit)
-                               {
-            
-            const auto [x_q, y_q, tot] = hit;
-            return x_q== x && y_q == y; });
-
-        if (it == hits.end())
+        for (int j = 0; j < RD53::N_QCORES_VERTICAL * config.size_qcore_vertical; j++)
         {
-            hits.push_back(HitCoord(x, y, tot));
+            hits.push_back(HitCoord(i, j, std::rand() % 16));
         }
     }
-
+    
     StreamHeader header = {13, 1, 3, 200, 500};
 
     Event event(config, header, hits);

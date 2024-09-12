@@ -1,10 +1,10 @@
-#include "RD53BEvent.h"
+#include "RD53Event.h"
 
 #include <bitset>
 #include <iomanip>
 #include <fstream>
 
-using namespace RD53B;
+using namespace RD53;
 
 QuarterCore::QuarterCore(const StreamConfig &config, uint8_t col_, uint8_t row_)
     : config_(&config), col_(col_), row_(row_), is_last_(false), is_neighbour_(false), is_last_in_event_(false), hits_(0), tots_(0)

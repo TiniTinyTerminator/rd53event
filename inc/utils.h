@@ -40,7 +40,7 @@ enum class DataTags
 
 std::ostream &operator<<(std::ostream &os, DataTags tag);
 
-enum Color
+enum class Color
 {
     // Standard colors
     BLACK,

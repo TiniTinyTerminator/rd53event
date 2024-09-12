@@ -1,4 +1,4 @@
-#include "RD53BEvent.h"
+#include "RD53Event.h"
 
 #include <cstdint>
 #include <stdexcept>
@@ -7,7 +7,7 @@
 #include <bitset>
 #include <string>
 
-using namespace RD53B;
+using namespace RD53;
 
 constexpr auto BITS_PER_WORD = std::numeric_limits<word_t>::digits;
 

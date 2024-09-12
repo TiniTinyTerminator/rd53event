@@ -1,9 +1,9 @@
 %{
-    #include "RD53BEvent.h"
+    #include "RD53Event.h"
 %}
 
 // Typemap to convert RD53B::HitCoord object into a Python tuple
-%typemap(out) RD53B::HitCoord {
+%typemap(out) RD53::HitCoord {
     $result = PyTuple_New(3);
 
     const auto [x,y,tot] = $1;
@@ -14,7 +14,7 @@
 }
 
 // Typemap to convert a vector of RD53B::HitCoord objects into a Python list of tuples
-%typemap(out) std::vector<RD53B::HitCoord> {
+%typemap(out) std::vector<RD53::HitCoord> {
     $result = PyList_New($1.size());
     for (size_t i = 0; i < $1.size(); ++i) {
         PyObject* tuple = PyTuple_New(3);
@@ -27,4 +27,11 @@
         PyList_SetItem($result, i, tuple);
     }
 }
+
+
+
+// %typemap(freearg) std::vector<RD53::word_t>& {
+//     delete $1;
+// }
+
 

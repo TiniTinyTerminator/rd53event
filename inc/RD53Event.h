@@ -14,9 +14,9 @@
 
 #include "utils.h"
 
-constexpr bool DEBUG = false;
+constexpr bool DEBUG = true;
 
-namespace RD53B
+namespace RD53
 {
 
     constexpr int N_QCORES_VERTICAL = 336 / 2;   // this is the physical number of rows quarter cores on the readout chip

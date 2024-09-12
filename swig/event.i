@@ -1,19 +1,17 @@
 
 %{
-    #include "RD53BEvent.h"
+    #include "RD53Event.h"
 
 %}
 
 %include "std_vector.i"
 
-%template(QcoreVector) std::vector<RD53B::QuarterCore>;
-
-%extend RD53B::Event {
+%extend RD53::Event {
     Event(const StreamConfig &config, const StreamHeader &header, PyObject *object) {
         PyObject* seq = PySequence_Fast(object, "Expected a sequence of tuples of length 3");
 
         Py_ssize_t len = PySequence_Fast_GET_SIZE(seq);
-        std::vector<RD53B::HitCoord> v(len);
+        std::vector<RD53::HitCoord> v(len);
 
         for (Py_ssize_t i = 0; i < len; i++) {
             PyObject* item = PySequence_Fast_GET_ITEM(seq, i);
@@ -35,10 +33,10 @@
             uint16_t y = (uint16_t)PyLong_AsUnsignedLong(item1);
             uint8_t val = (uint8_t)PyLong_AsUnsignedLong(item2);
 
-            v[i] = RD53B::HitCoord(x, y, val);
+            v[i] = RD53::HitCoord(x, y, val);
         }
         Py_DECREF(seq);
 
-        return new RD53B::Event(config, header, std::move(v));
+        return new RD53::Event(config, header, std::move(v));
     }
 }

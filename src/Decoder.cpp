@@ -29,8 +29,12 @@ inline std::pair<uint8_t, uint8_t> decode_bitpair(uint8_t bits)
 
 DataTags state;
 
-Decoder::Decoder(const StreamConfig &config, std::vector<word_t> &words) : stream_(words), config_(config), bit_index_(0)
+Decoder::Decoder(const StreamConfig &config, std::vector<word_t> &words) : stream_(words), config_(config), bit_index_(0), jump_size_(0), qc_(), events_(), current_event_(), current_header_(), current_qcores_()
 {
+    // for (auto word : stream_)
+    // {
+    //     std::cout << std::bitset<64>(word) << std::endl;
+    // }
 }
 
 inline void Decoder::_new_event()
@@ -64,13 +68,13 @@ word_t Decoder::_shift_stream(size_t bit_index)
     size_t word_index = bit_index / word_size_;
     size_t bit_offset = bit_index % word_size_;
 
-    bool on_last_word = word_index == stream_.size() - 1;
+    int8_t remaining_words = stream_.size() - word_index - 1;
 
-    word_t first_word = stream_[word_index] << word_meta_size_ >> word_meta_size_;
-    word_t second_word = on_last_word ? 0 : stream_[word_index + 1] << word_meta_size_;
+    word_t first_word = remaining_words == -1 ? 0 : (stream_[word_index] << word_meta_size_) >> word_meta_size_;
+    word_t second_word = remaining_words == 0 ? 0 : (stream_[word_index + 1] << word_meta_size_);
 
-    first_word = bit_offset == 0 ? first_word : first_word << bit_offset;
-    second_word = bit_offset == 0 ? 0 : second_word >> (BITS_PER_WORD - bit_offset);
+    first_word = bit_offset == 0 ? first_word : (first_word << bit_offset);
+    second_word = bit_offset == 0 ? 0 : (second_word >> (BITS_PER_WORD - bit_offset));
 
     word_t full_word = first_word | second_word;
 

@@ -27,11 +27,3 @@
         PyList_SetItem($result, i, tuple);
     }
 }
-
-
-
-// %typemap(freearg) std::vector<RD53::word_t>& {
-//     delete $1;
-// }
-
-

@@ -14,7 +14,7 @@
 
 #include "utils.h"
 
-constexpr bool DEBUG = true;
+constexpr bool DEBUG = false;
 
 namespace RD53
 {

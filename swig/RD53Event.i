@@ -13,8 +13,38 @@
 %include "std_pair.i"
 %include "shared_ptr.i"
 %include "stdint.i"
+%include "exception.i"       
 
 %feature("python:annotations", "c");
+
+// Global exception handler for all functions
+%exception {
+    try {
+        $action
+    }
+    catch (const std::invalid_argument& e) {
+        PyErr_SetString(PyExc_ValueError, e.what());
+        return NULL;
+    }
+    catch (const std::out_of_range& e) {
+        PyErr_SetString(PyExc_IndexError, e.what());
+        return NULL;
+    }
+    catch (const std::runtime_error& e) {
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+        return NULL;
+    }
+    catch (const std::exception& e) {
+        // Catch any other standard exceptions
+        PyErr_SetString(PyExc_Exception, e.what());
+        return NULL;
+    }
+    catch (...) {
+        // Catch all other unknown exceptions
+        PyErr_SetString(PyExc_Exception, "Unknown exception occurred");
+        return NULL;
+    }
+}
 
 namespace std {
     %template(EventVector) vector<RD53::Event>;

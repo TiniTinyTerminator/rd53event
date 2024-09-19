@@ -146,7 +146,7 @@ std::vector<word_t> Event::serialize_event()
         break;
     }
 
-    if (DEBUG)
+    if constexpr (DEBUG)
     {
         size_t s = 0;
         for (const auto &[width, word, name] : packets)

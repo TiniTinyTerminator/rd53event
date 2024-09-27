@@ -64,6 +64,8 @@ void Event::_get_qcores_from_pixelframe()
         qcore_dict[{qcol, qrow}].set_hit(col_in_qcore, row_in_qcore, tot);
     }
 
+    //TODO reverse column order (columns decrements from 55 to 1)
+
     for (auto it = qcore_dict.begin(); it != qcore_dict.end(); ++it)
     {
         size_t key_id = std::distance(qcore_dict.begin(), it);

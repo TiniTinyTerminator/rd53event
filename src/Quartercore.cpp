@@ -261,10 +261,19 @@ uint8_t QuarterCore::hit_index(uint8_t col, uint8_t row) const
 
     if (config_->size_qcore_vertical == 2 && config_->size_qcore_horizontal == 8)
     {
-        return 2 * col + row;
+        // the hits are mapped in qcore like:
+        // 0  1   2  3   4  5   6  7
+        // 8  9  10 11  12 13  14 15
+        return col + 2 * row;
     }
     else if (config_->size_qcore_vertical == 4 && config_->size_qcore_horizontal == 4)
     {
+
+        // the hits are mappend in qcore like:
+        // 0  2  4  6
+        // 1  3  5  7
+        // 8 10 12 14
+        // 9 11 13 15
         return row > 1 ? 8 + col * 2 + row - 2 : col * 2 + row;
     }
     else

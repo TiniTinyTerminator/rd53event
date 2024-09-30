@@ -17,8 +17,8 @@ if __name__ == "__main__":
         conf.bcid = True
         conf.drop_tot = False
         conf.compressed_hitmap = True
-        conf.size_qcore_vertical = 2
-        conf.size_qcore_horizontal = 8
+        conf.size_qcore_vertical = 4
+        conf.size_qcore_horizontal = 4
 
         hits = {}
 

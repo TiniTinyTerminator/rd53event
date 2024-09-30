@@ -51,8 +51,6 @@ void Event::_get_qcores_from_pixelframe()
 
     for (const auto [x, y, tot] : hits_)
     {
-        if (y > config.size_qcore_vertical * N_QCORES_VERTICAL)
-            throw std::runtime_error("y coordinate out of bounds:" + std::to_string(y));
 
         uint16_t col_in_qcore = x % config.size_qcore_horizontal;
         uint16_t qcol = (x - col_in_qcore) / config.size_qcore_horizontal;
@@ -61,8 +59,6 @@ void Event::_get_qcores_from_pixelframe()
 
         if (qcore_dict.find({qcol, qrow}) == qcore_dict.end())
         {
-            std::cout << "qcol: " << qcol << " qrow: " << qrow << std::endl;
-
             qcore_dict[{qcol, qrow}] = QuarterCore(config, qcol, qrow);
         }
 

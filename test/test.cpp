@@ -18,8 +18,8 @@ int main()
     config.eos_marker = false;
     config.bcid = true;
     config.l1id = true;
-    config.size_qcore_horizontal = 4;
-    config.size_qcore_vertical = 4;
+    config.size_qcore_horizontal = 8;
+    config.size_qcore_vertical = 2;
 
     std::map<std::pair<uint16_t, uint16_t>, uint8_t> hits_mapped;
 
@@ -64,6 +64,8 @@ int main()
     auto received_qc = decoder.get_events()[0].get_qcores();
 
     assert(received_qc == event.get_qcores());
+    
+    std::cout << "Qcores match!" << std::endl;
 
     auto received_hits = decoder.get_events()[0].get_hits();
 

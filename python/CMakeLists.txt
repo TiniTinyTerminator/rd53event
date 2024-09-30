@@ -1,74 +1,100 @@
-find_package(SWIG REQUIRED)
+cmake_minimum_required(VERSION 3.4...3.18)
+project(RD53Eventpy)
+
+# Set the C++ standard to C++17
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Find pybind11 and Python packages
+find_package(pybind11 REQUIRED)
 find_package(Python REQUIRED COMPONENTS Interpreter Development)
 
-include(${SWIG_USE_FILE})
-
+# Include directories
 include_directories(${Python_INCLUDE_DIRS})
 
-# Set the language for SWIG and create the interface
-set(SWIG_LANGUAGE python)
-set(SWIG_INTERFACE ${CMAKE_SOURCE_DIR}/swig/RD53Event.i)
-set_property(SOURCE ${SWIG_INTERFACE} PROPERTY CPLUSPLUS ON)
+# Set source and include directories
+set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
+set(INC_DIR ${CMAKE_SOURCE_DIR}/include)
 
-# Add SWIG module with documentation enabled
-set(CMAKE_SWIG_FLAGS -doxygen)
+include_directories(${INC_DIR})
 
-swig_add_library(RD53Eventpy
-    TYPE        SHARED
-    LANGUAGE    ${SWIG_LANGUAGE}
-    SOURCES     ${SWIG_INTERFACE}
-                ${SRC}/Quartercore.cpp
-                ${SRC}/Event.cpp
-                ${SRC}/Decoder.cpp
-                ${SRC}/utils.cpp
-    OUTFILE_DIR ${CMAKE_BINARY_DIR}/wrappers
+# Set the module name
+set(MODULE_NAME RD53Eventpy)
+
+# Source files for the module
+set(SRC_FILES
+    ${SRC_DIR}/Quartercore.cpp
+    ${SRC_DIR}/Event.cpp
+    ${SRC_DIR}/Decoder.cpp
+    ${SRC_DIR}/utils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/bindings.cc  # The pybind11 binding code
+)
+
+# Add the pybind11 module
+pybind11_add_module(${MODULE_NAME} MODULE ${SRC_FILES})
+
+# Set the output directory for the Python module
+set_target_properties(${MODULE_NAME} PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 # Enable testing
 enable_testing()
-add_test(NAME PythonBindingsTest COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/test/test.py)
+add_test(NAME PythonBindingsTest
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/test/test.py
+)
 
+# Set the local RD53Event package directory
 set(LOCAL_RD53PY ${CMAKE_SOURCE_DIR}/RD53Event)
 
-set(PYTHON_INSTALL_FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/RD53Event.py
-        ${CMAKE_CURRENT_BINARY_DIR}/_RD53Eventpy.so)
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/__init__.py.in
+  ${LOCAL_RD53PY}/__init__.py
+)
 
-# Configure setup.py and copy to output directory
-set(SETUP_PY_IN ${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in)
-set(SETUP_PY_OUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py)
-configure_file(${SETUP_PY_IN} ${SETUP_PY_OUT})
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/__init__.py.in
+  ${CMAKE_CURRENT_BINARY_DIR}/__init__.py
+)
 
-# Configure setup.py and copy to output directory
-set(INIT_PY_IN ${CMAKE_CURRENT_SOURCE_DIR}/__init__.py.in)
-set(INIT_PY_OUT ${CMAKE_CURRENT_BINARY_DIR}/__init__.py)
-set(INIT_PY_LOCAL ${CMAKE_SOURCE_DIR}/__init__.py)
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/__init_global.py.in
+  ${CMAKE_SOURCE_DIR}/__init__.py
+)
 
-configure_file(${INIT_PY_IN} ${INIT_PY_OUT})
-configure_file(${INIT_PY_IN} ${INIT_PY_LOCAL})
-set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${INIT_PY_LOCAL})
-
-set(INIT_PY_SUBLOCAL ${LOCAL_RD53PY}/__init__.py)
-configure_file(${INIT_PY_IN} ${INIT_PY_SUBLOCAL})
-set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${INIT_PY_SUBLOCAL})
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml.in
+  ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml
+)
 
 # Create the custom target to build the Python package
-add_custom_target(build-python
-        DEPENDS RD53Eventpy
-        COMMAND ${Python_EXECUTABLE} -m build
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "Building Python package"
+add_custom_target(package-python
+    DEPENDS ${MODULE_NAME}
+    COMMAND ${Python_EXECUTABLE} -m build --wheel --outdir ${CMAKE_CURRENT_BINARY_DIR}/dist
+    COMMENT "Building Python package"
 )
 
 # Create the custom target to install the Python package
 add_custom_target(install-python
-        DEPENDS build-python
-        COMMAND ${Python_EXECUTABLE} -m installer ${CMAKE_CURRENT_BINARY_DIR}/dist/RD53Event-0.1.0-py3-none-any.whl
-        COMMENT "Installing Python package"
+    DEPENDS package-python
+    COMMAND ${Python_EXECUTABLE} -m pip install --user ${CMAKE_CURRENT_BINARY_DIR}/dist/*.whl
+    COMMENT "Installing Python package"
 )
 
-add_custom_command(TARGET RD53Eventpy POST_BUILD
-        COMMAND cp ${PYTHON_INSTALL_FILES} ${LOCAL_RD53PY}
+# Generate stubs using pybind11-stubgen after the module is built
+add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
+    COMMAND ${Python_EXECUTABLE} -m pybind11_stubgen ${MODULE_NAME} --output-dir ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/*.pyi ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS ${MODULE_NAME}
+    COMMENT "Generating stubs for Python module using pybind11-stubgen"
 )
 
-set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES  ${LOCAL_RD53PY}/_RD53Eventpy.so ${LOCAL_RD53PY}/RD53Event.py)
+# Copy the built module to the local RD53Event package directory
+add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${LOCAL_RD53PY}
+    COMMAND ${CMAKE_COMMAND} -E copy  ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}*.so ${LOCAL_RD53PY}/
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/*.pyi ${LOCAL_RD53PY}/
+    COMMENT "Copying built Python module to package directory"
+)
+
+set_directory_properties(PROPERTIES ADDITIONAL_CLEAN_FILES ${LOCAL_RD53PY})

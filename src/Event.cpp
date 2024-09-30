@@ -49,12 +49,13 @@ void Event::_get_qcores_from_pixelframe()
 
     std::map<std::pair<int, int>, QuarterCore> qcore_dict;
 
-    for (const auto &[x, y, tot] : hits_)
+    for (const auto [x, y, tot] : hits_)
     {
-        int col_in_qcore = x % config.size_qcore_horizontal;
-        int qcol = (x - col_in_qcore) / config.size_qcore_horizontal;
-        int row_in_qcore = y % config.size_qcore_vertical;
-        int qrow = (y - row_in_qcore) / config.size_qcore_vertical;
+
+        uint16_t col_in_qcore = x % config.size_qcore_horizontal;
+        uint16_t qcol = (x - col_in_qcore) / config.size_qcore_horizontal;
+        uint16_t row_in_qcore = y % config.size_qcore_vertical;
+        uint16_t qrow = (y - row_in_qcore) / config.size_qcore_vertical;
 
         if (qcore_dict.find({qcol, qrow}) == qcore_dict.end())
         {

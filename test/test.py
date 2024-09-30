@@ -1,15 +1,14 @@
-from copy import deepcopy
 import random
 import sys
 import os
 # Ensure the generated SWIG module is in the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'RD53Event')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', "RD53Event")))
 
-from RD53Event import * #QuarterCore, Decoder, StreamConfig, Event, N_QCORES_HORIZONTAL, N_QCORES_VERTICAL, Header, HitCoord
-import RD53Event
+from RD53Event import *
 
 if __name__ == "__main__":
     try:
+        print(N_QCORES_HORIZONTAL, N_QCORES_VERTICAL)
         conf = StreamConfig()
 
         conf.chip_id = True
@@ -17,12 +16,12 @@ if __name__ == "__main__":
         conf.bcid = True
         conf.drop_tot = False
         conf.compressed_hitmap = True
-        conf.size_qcore_vertical = 2
-        conf.size_qcore_horizontal = 8
+        conf.size_qcore_vertical = 4
+        conf.size_qcore_horizontal = 4
 
         hits = {}
 
-        for i in range(10000000):
+        for i in range(1000):
             x = random.randint(0, N_QCORES_HORIZONTAL * conf.size_qcore_horizontal - 1)
             y = random.randint(0, N_QCORES_VERTICAL * conf.size_qcore_vertical - 1)
             tot = random.randint(0, 15)
@@ -52,7 +51,7 @@ if __name__ == "__main__":
 
         event = Event(conf, header, input_hits)
 
-        qcores = RD53Event.QcoreVector(event.get_qcores())
+        qcores = event.get_qcores()
 
         print("hello")
 

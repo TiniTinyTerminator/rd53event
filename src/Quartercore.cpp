@@ -19,7 +19,7 @@ QuarterCore::QuarterCore(uint8_t col_, uint8_t row_)
 std::pair<bool, uint8_t> QuarterCore::get_hit(uint8_t index) const
 {
     if (index >= 16)
-        throw std::runtime_error("ERROR: index out of bounds");
+        throw std::invalid_argument("index out of bounds");
 
     return {hits_ >> index & 0x1, tots_ >> (index * 4) & 0xF};
 }
@@ -34,7 +34,7 @@ std::pair<bool, uint8_t> QuarterCore::get_hit(uint8_t x, uint8_t y) const
 void QuarterCore::set_hit(uint8_t index, uint8_t tot)
 {
     if (index >= 16)
-        throw std::runtime_error("ERROR: col row out of range");
+        throw std::invalid_argument("index out of range");
 
     hits_ = (hits_ & ~(1 << index)) | 1 << index;
     tots_ = (tots_ & ~((uint64_t)0xF << (index * 4))) | ((uint64_t)tot << (index * 4));
@@ -61,7 +61,7 @@ std::pair<uint16_t, uint64_t> QuarterCore::get_hit_raw() const
 std::vector<HitCoord> QuarterCore::get_hit_vectors() const
 {
     if (config_ == nullptr)
-        throw std::runtime_error("ERROR: QuarterCore has no config");
+        throw std::runtime_error("QuarterCore has no config");
 
     std::vector<HitCoord> result;
     for (uint8_t x = 0; x < config_->size_qcore_horizontal; x++)
@@ -82,7 +82,7 @@ std::vector<HitCoord> QuarterCore::get_hit_vectors() const
 std::vector<std::vector<std::pair<bool, uint8_t>>> QuarterCore::get_hit_map() const
 {
     if (config_ == nullptr)
-        throw std::runtime_error("ERROR: QuarterCore has no config");
+        throw std::runtime_error("QuarterCore has no config");
 
     std::vector<std::vector<std::pair<bool, uint8_t>>> hit_map(config_->size_qcore_horizontal, std::vector<std::pair<bool, uint8_t>>(config_->size_qcore_vertical));
 
@@ -254,17 +254,17 @@ std::vector<std::tuple<uint8_t, unsigned long long, DataTags>> QuarterCore::seri
 uint8_t QuarterCore::hit_index(uint8_t col, uint8_t row) const
 {
     if (config_ == nullptr)
-        throw std::runtime_error("ERROR: QuarterCore has no config");
+        throw std::runtime_error("QuarterCore has no config");
 
     if (col >= config_->size_qcore_horizontal || row >= config_->size_qcore_vertical)
-        throw std::runtime_error("coordinates (" + std::to_string(col) + ", " + std::to_string(row) + ") out of bounds (" + std::to_string(config_->size_qcore_horizontal) + ", " + std::to_string(config_->size_qcore_vertical) + ")");
+        throw std::invalid_argument("coordinates (" + std::to_string(col) + ", " + std::to_string(row) + ") out of bounds (" + std::to_string(config_->size_qcore_horizontal) + ", " + std::to_string(config_->size_qcore_vertical) + ")");
 
     if (config_->size_qcore_vertical == 2 && config_->size_qcore_horizontal == 8)
     {
         // the hits are mapped in qcore like:
         // 0  1   2  3   4  5   6  7
         // 8  9  10 11  12 13  14 15
-        return col + 2 * row;
+        return col + 8 * row;
     }
     else if (config_->size_qcore_vertical == 4 && config_->size_qcore_horizontal == 4)
     {

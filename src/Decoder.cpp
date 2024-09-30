@@ -68,10 +68,12 @@ word_t Decoder::_shift_stream(size_t bit_index)
     size_t word_index = bit_index / word_size_;
     size_t bit_offset = bit_index % word_size_;
 
-    int8_t remaining_words = stream_.size() - word_index - 1;
+    uint16_t remaining_words = stream_.size() - word_index;
 
-    word_t first_word = remaining_words == -1 ? 0 : (stream_[word_index] << word_meta_size_) >> word_meta_size_;
-    word_t second_word = remaining_words == 0 ? 0 : (stream_[word_index + 1] << word_meta_size_);
+    // std::cout << "word_index: " << word_index << " bit_offset: " << bit_offset << " remaining_words: " << remaining_words << std::endl;
+
+    word_t first_word = remaining_words == 0 ? 0 : (stream_[word_index] << word_meta_size_) >> word_meta_size_;
+    word_t second_word = remaining_words == 1 ? 0 : (stream_[word_index + 1] << word_meta_size_);
 
     first_word = bit_offset == 0 ? first_word : (first_word << bit_offset);
     second_word = bit_offset == 0 ? 0 : (second_word >> (BITS_PER_WORD - bit_offset));

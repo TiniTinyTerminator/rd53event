@@ -1,5 +1,3 @@
-# CMakeLists.txt
-
 cmake_minimum_required(VERSION 3.4...3.18)
 project(RD53Eventpy)
 
@@ -49,43 +47,54 @@ add_test(NAME PythonBindingsTest
 # Set the local RD53Event package directory
 set(LOCAL_RD53PY ${CMAKE_SOURCE_DIR}/RD53Event)
 
-# Set the Python install files
-set(PYTHON_INSTALL_FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}*.so
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/__init__.py.in
+  ${LOCAL_RD53PY}/__init__.py
 )
 
-message(STATUS "Python install files: ${PYTHON_INSTALL_FILES}")
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/__init__.py.in
+  ${CMAKE_CURRENT_BINARY_DIR}/__init__.py
+)
 
-# Configure setup.py and __init__.py
-set(SETUP_PY_IN ${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in)
-set(SETUP_PY_OUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py)
-configure_file(${SETUP_PY_IN} ${SETUP_PY_OUT} @ONLY)
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/__init_global.py.in
+  ${CMAKE_SOURCE_DIR}/__init__.py
+)
 
-set(INIT_PY_IN ${CMAKE_CURRENT_SOURCE_DIR}/__init__.py.in)
-set(INIT_PY_OUT ${CMAKE_CURRENT_BINARY_DIR}/__init__.py)
-configure_file(${INIT_PY_IN} ${INIT_PY_OUT} @ONLY)
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml.in
+  ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml
+)
 
 # Create the custom target to build the Python package
-add_custom_target(build-python
+add_custom_target(package-python
     DEPENDS ${MODULE_NAME}
     COMMAND ${Python_EXECUTABLE} -m build --wheel --outdir ${CMAKE_CURRENT_BINARY_DIR}/dist
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Building Python package"
 )
 
 # Create the custom target to install the Python package
 add_custom_target(install-python
-    DEPENDS build-python
+    DEPENDS package-python
     COMMAND ${Python_EXECUTABLE} -m pip install --user ${CMAKE_CURRENT_BINARY_DIR}/dist/*.whl
     COMMENT "Installing Python package"
 )
 
+# Generate stubs using pybind11-stubgen after the module is built
+add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
+    COMMAND ${Python_EXECUTABLE} -m pybind11_stubgen ${MODULE_NAME} --output-dir ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/*.pyi ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS ${MODULE_NAME}
+    COMMENT "Generating stubs for Python module using pybind11-stubgen"
+)
+
 # Copy the built module to the local RD53Event package directory
 add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${PYTHON_INSTALL_FILES} ${LOCAL_RD53PY}/
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${LOCAL_RD53PY}
+    COMMAND ${CMAKE_COMMAND} -E copy  ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}*.so ${LOCAL_RD53PY}/
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/*.pyi ${LOCAL_RD53PY}/
     COMMENT "Copying built Python module to package directory"
 )
 
-set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES  
-    ${LOCAL_RD53PY}/*.so
-`)
+set_directory_properties(PROPERTIES ADDITIONAL_CLEAN_FILES ${LOCAL_RD53PY})

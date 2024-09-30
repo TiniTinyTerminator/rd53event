@@ -1,15 +1,14 @@
-from copy import deepcopy
 import random
 import sys
 import os
 # Ensure the generated SWIG module is in the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', "RD53Event")))
 
-from RD53Event import * #QuarterCore, Decoder, StreamConfig, Event, N_QCORES_HORIZONTAL, N_QCORES_VERTICAL, Header, HitCoord
-import RD53Event
+from RD53Event import *
 
 if __name__ == "__main__":
     try:
+        print(N_QCORES_HORIZONTAL, N_QCORES_VERTICAL)
         conf = StreamConfig()
 
         conf.chip_id = True

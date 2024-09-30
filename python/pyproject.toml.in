@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "RD53Event"
+version = "1.1.0"
+description = "Description of RD53Event package"
+# You can add author information and other metadata here if necessary
+# authors = [{name = "Author Name", email = "email@example.com"}]
+requires-python = ">=3.6"
+
+[project.urls]
+homepage = "https://example.com/RD53Event"  # Replace with actual URL if available
+
+[tool.setuptools]
+packages = ["RD53Event"]
+package-dir = { "RD53Event" = "./" }
+include-package-data = true  # This is the equivalent of package_data
+
+[tool.setuptools.package-data]
+"RD53Event" = ["*.pyi", "*.py", "*.so"]
+
+[project.optional-dependencies]
+# Add optional dependencies here if needed, for example:
+# dev = ["pytest", "black"]

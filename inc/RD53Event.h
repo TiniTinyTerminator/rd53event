@@ -283,7 +283,7 @@ namespace RD53
         void set_row(uint8_t row)
         {
             if (row >= N_QCORES_VERTICAL)
-                throw std::runtime_error("ERROR: row index out of range");
+                throw std::runtime_error("ERROR: row index "+ std::to_string((uint32_t)row) +" out of range");
             row_ = row;
         }
 

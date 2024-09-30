@@ -4,6 +4,7 @@
 #include <bitset>
 #include <ctime>
 #include <cassert>
+#include <map>
 
 using namespace RD53;
 
@@ -17,19 +18,28 @@ int main()
     config.eos_marker = false;
     config.bcid = true;
     config.l1id = true;
-    config.size_qcore_horizontal = 8;
-    config.size_qcore_vertical = 2;
+    config.size_qcore_horizontal = 4;
+    config.size_qcore_vertical = 4;
 
-    std::vector<HitCoord> hits;
+    std::map<std::pair<uint16_t, uint16_t>, uint8_t> hits_mapped;
 
     std::srand(std::time(nullptr));
 
-    for (int i = 0; i < RD53::N_QCORES_HORIZONTAL * config.size_qcore_horizontal; i++)
+    for (int x = 0; x < (RD53::N_QCORES_HORIZONTAL) * config.size_qcore_horizontal; x++)
     {
-        for (int j = 0; j < RD53::N_QCORES_VERTICAL * config.size_qcore_vertical; j++)
+        for (int y = 0; y < (RD53::N_QCORES_VERTICAL) * config.size_qcore_vertical; y++)
         {
-            hits.push_back(HitCoord(i, j, std::rand() % 16));
+            // hits.push_back(HitCoord(x, y, std::rand() % 16));
+            hits_mapped[{x, y}] = std::rand() % 16;
         }
+    }
+
+
+    std::vector<HitCoord> hits;
+
+    for (auto &[k, v] : hits_mapped)
+    {
+        hits.push_back(HitCoord(k.first, k.second, v));
     }
     
     StreamHeader header = {13, 1, 3, 200, 500};
@@ -39,7 +49,7 @@ int main()
     auto serialized_data = event.serialize_event();
 
     // for (auto qc : event.get_qcores())
-    // {
+    // { 
     //     std::cout << qc.as_str();
     // }
 

@@ -49,15 +49,20 @@ void Event::_get_qcores_from_pixelframe()
 
     std::map<std::pair<int, int>, QuarterCore> qcore_dict;
 
-    for (const auto &[x, y, tot] : hits_)
+    for (const auto [x, y, tot] : hits_)
     {
-        int col_in_qcore = x % config.size_qcore_horizontal;
-        int qcol = (x - col_in_qcore) / config.size_qcore_horizontal;
-        int row_in_qcore = y % config.size_qcore_vertical;
-        int qrow = (y - row_in_qcore) / config.size_qcore_vertical;
+        if (y > config.size_qcore_vertical * N_QCORES_VERTICAL)
+            throw std::runtime_error("y coordinate out of bounds:" + std::to_string(y));
+
+        uint16_t col_in_qcore = x % config.size_qcore_horizontal;
+        uint16_t qcol = (x - col_in_qcore) / config.size_qcore_horizontal;
+        uint16_t row_in_qcore = y % config.size_qcore_vertical;
+        uint16_t qrow = (y - row_in_qcore) / config.size_qcore_vertical;
 
         if (qcore_dict.find({qcol, qrow}) == qcore_dict.end())
         {
+            std::cout << "qcol: " << qcol << " qrow: " << qrow << std::endl;
+
             qcore_dict[{qcol, qrow}] = QuarterCore(config, qcol, qrow);
         }
 

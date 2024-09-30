@@ -34,7 +34,7 @@ std::pair<bool, uint8_t> QuarterCore::get_hit(uint8_t x, uint8_t y) const
 void QuarterCore::set_hit(uint8_t index, uint8_t tot)
 {
     if (index >= 16)
-        throw std::runtime_error("ERROR: col row out of range");
+        throw std::runtime_error("ERROR: index out of range");
 
     hits_ = (hits_ & ~(1 << index)) | 1 << index;
     tots_ = (tots_ & ~((uint64_t)0xF << (index * 4))) | ((uint64_t)tot << (index * 4));

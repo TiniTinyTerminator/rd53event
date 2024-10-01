@@ -52,7 +52,7 @@ Now, with Python bindings using [pybind11](https://github.com/pybind/pybind11), 
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/yourusername/rd53-event-decoder.git
+   git clone https://github.com/TiniTinyTerminator/rd53event.git
    cd rd53-event-decoder
    ```
 

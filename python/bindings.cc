@@ -1,4 +1,5 @@
 // rd53event_bindings.cpp
+#include <cstdint>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include "RD53Event.h"

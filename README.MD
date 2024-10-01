@@ -87,7 +87,7 @@ To build the Python bindings, follow these additional steps:
    Make sure `pybind11` is available. You can install it via `pip`:
 
    ```bash
-   pip install pybind11
+   pip install pybind11 pybind11-stubgen
    ```
 
 2. **Configure and Build the Python Bindings**
@@ -97,7 +97,7 @@ To build the Python bindings, follow these additional steps:
    ```bash
    cmake .. -DPYTHON_EXECUTABLE=$(which python)
    make RD53Eventpy
-   # optional packaging and install and install
+   # optional packaging and install
    make package-python
    make install-python
    ```

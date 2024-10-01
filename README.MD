@@ -1,5 +1,3 @@
-Here is an updated README that reflects that your project uses CMake for building both the C++ library and the Python bindings:
-
 # RD53 Event Decoder Library
 
 A C++ and Python library for decoding and handling event data from the RD53 readout chip, commonly used in high-energy physics experiments for pixel detectors.

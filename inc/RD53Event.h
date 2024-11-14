@@ -399,9 +399,6 @@ namespace RD53
         Event(const Event &other);
         Event &operator=(const Event &other);
 
-        // For recursive event concatenation
-        friend class Event;
-
         /**
          * @brief Constructs an Event object
          *

@@ -22,6 +22,7 @@ add_library(RD53Event STATIC
     ${SRC}/Event.cpp
     ${SRC}/Decoder.cpp
     ${SRC}/utils.cpp
+    ${SRC}/TEPXEvent.cpp
 )
 
 set_target_properties(RD53Event PROPERTIES

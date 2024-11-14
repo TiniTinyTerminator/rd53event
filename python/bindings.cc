@@ -79,9 +79,7 @@ PYBIND11_MODULE(RD53Eventpy, m) {
         .def(py::init<const RD53::StreamConfig &, uint8_t, uint8_t>(),
              py::arg("config"), py::arg("col") = 0, py::arg("row") = 0,
              "Constructs a QuarterCore object with specified configuration and optional column and row indices.")
-        .def(py::init<uint8_t, uint8_t>(),
-             py::arg("col") = 0, py::arg("row") = 0,
-             "Constructs a QuarterCore object with optional column and row indices.")
+        // Removed the constructor without StreamConfig parameter
         .def("get_hit", (std::pair<bool, uint8_t> (RD53::QuarterCore::*)(uint8_t, uint8_t) const) &RD53::QuarterCore::get_hit,
              py::arg("col"), py::arg("row"),
              "Returns the hit value at the specified column and row as a pair (hit_exists, tot_value).")
@@ -136,9 +134,6 @@ PYBIND11_MODULE(RD53Eventpy, m) {
         .def("set_is_last_in_event", &RD53::QuarterCore::set_is_last_in_event,
              py::arg("is_last_in_event"),
              "Sets a boolean indicating whether the quarter core is the last in the event.")
-        .def("set_config", &RD53::QuarterCore::set_config,
-             py::arg("config"),
-             "Sets the StreamConfig object.")
         .def("get_config", &RD53::QuarterCore::get_config,
              "Gets the StreamConfig object.")
         .def("as_str", &RD53::QuarterCore::as_str,
@@ -169,6 +164,20 @@ PYBIND11_MODULE(RD53Eventpy, m) {
              "Returns a string representation of the Event object.")
         .def_readonly("config", &RD53::Event::config, "The StreamConfig object that contains the configuration parameters.")
         .def_readonly("header", &RD53::Event::header, "The StreamHeader object that contains the header of the event.");
+
+    // Bind TEPXEvent class
+    py::class_<RD53::TEPXEvent>(m, "TEPXEvent", "Represents a TEPXEvent object containing hits and events for the TEPX detector.")
+        .def(py::init<const RD53::StreamConfig &, const RD53::StreamHeader &, const std::vector<RD53::HitCoord> &>(),
+             py::arg("config"), py::arg("header"), py::arg("hits"),
+             "Constructs a TEPXEvent object with specified configuration, header, and hits.")
+        .def(py::init<const RD53::StreamConfig &, const RD53::StreamHeader &, const std::vector<std::vector<RD53::HitCoord>> &>(),
+             py::arg("config"), py::arg("header"), py::arg("frames"),
+             "Constructs a TEPXEvent object with specified configuration, header, and nested vector of hits.")
+        .def("serialize_event", &RD53::TEPXEvent::serialize_event,
+             "Serializes the TEPXEvent data into an array of vectors of 64-bit integers.")
+        .def_readonly("config", &RD53::TEPXEvent::config, "The StreamConfig object that contains the configuration parameters.")
+        .def_readonly("header", &RD53::TEPXEvent::header, "The StreamHeader object that contains the header of the event.");
+        // Note: Since the TEPXEvent class does not expose methods to get frames or chips, we only bind what's available.
 
     // Bind Decoder class
     py::class_<RD53::Decoder>(m, "Decoder", "A class for decoding streams of RD53 event data.")

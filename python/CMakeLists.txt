@@ -27,6 +27,7 @@ set(SRC_FILES
     ${SRC_DIR}/Event.cpp
     ${SRC_DIR}/Decoder.cpp
     ${SRC_DIR}/utils.cpp
+    ${SRC_DIR}/TEPXEvent.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/bindings.cc  # The pybind11 binding code
 )
 

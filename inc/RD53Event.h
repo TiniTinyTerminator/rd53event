@@ -1,3 +1,14 @@
+/**
+ * @file RD53Event.h
+ * @author max bensink  (maxbensink@outlook.com)
+ * @brief
+ * @version 1.0
+ * @date 2024-11-14
+ *
+ * @copyright Copyright (c) 2024
+ *
+ */
+
 #ifndef RD53EVENT_H
 #define RD53EVENT_H
 
@@ -283,7 +294,7 @@ namespace RD53
         void set_row(uint8_t row)
         {
             if (row >= N_QCORES_VERTICAL)
-                throw std::runtime_error("ERROR: row index "+ std::to_string((uint32_t)row) +" out of range");
+                throw std::runtime_error("ERROR: row index " + std::to_string((uint32_t)row) + " out of range");
             row_ = row;
         }
 
@@ -388,6 +399,9 @@ namespace RD53
         Event(const Event &other);
         Event &operator=(const Event &other);
 
+        // For recursive event concatenation
+        friend class Event;
+
         /**
          * @brief Constructs an Event object
          *
@@ -410,6 +424,30 @@ namespace RD53
         Event(const StreamConfig &config, const StreamHeader &header, std::vector<QuarterCore> &qcores);
 
         /**
+         * @brief Constructs an Event object with hits
+         *
+         * This constructor initializes an Event object using a given configuration,
+         * header, and a nested vector of hits.
+         *
+         * @param config The StreamConfig object that contains the configuration parameters
+         * @param header The StreamHeader object that contains the header of the event
+         * @param hits A nested vector of HitCoord objects representing the hits in the event
+         */
+        Event(const StreamConfig &config, const StreamHeader &header, const std::vector<std::vector<HitCoord>> &frames);
+
+        /**
+         * @brief Constructs an Event object with QuarterCores
+         *
+         * This constructor initializes an Event object using a given configuration,
+         * header, and a nested vector of QuarterCore objects.
+         *
+         * @param config The StreamConfig object that contains the configuration parameters
+         * @param header The StreamHeader object that contains the header of the event
+         * @param qcores A nested vector of QuarterCore objects containing the hits in the event
+         */
+        Event(const StreamConfig &config, const StreamHeader &header, std::vector<std::vector<QuarterCore>> &frames);
+
+        /**
          * @brief Serializes the event data into a vector of 64-bit integers
          *
          * @return A vector of 64-bit integers containing the serialized event data
@@ -429,19 +467,29 @@ namespace RD53
          *
          * @throws None
          */
-        std::vector<QuarterCore> get_qcores()
+        std::vector<std::vector<QuarterCore>> get_qcores()
         {
-            if (qcores_.empty())
+            if (qcores.empty())
                 _get_qcores_from_pixelframe();
 
-            std::vector<QuarterCore> output = qcores_;
+            std::vector<std::vector<QuarterCore>> output;
 
-            for (size_t i = 0; i < output.size(); i++)
+            output.push_back(qcores);
+
+            for (auto &event : events)
             {
-                output[i].set_config(nullptr);
+                output.push_back(event.get_qcores()[0]);
             }
 
-            return qcores_;
+            for (auto &qcores : output)
+            {
+                for (auto &qcore : qcores)
+                {
+                    qcore.set_config(nullptr);
+                }
+            }
+
+            return output;
         }
 
         /**
@@ -451,11 +499,21 @@ namespace RD53
          *
          * @throws None
          */
-        std::vector<HitCoord> get_hits()
+        std::vector<std::vector<HitCoord>> get_hits()
         {
-            if (hits_.empty())
+            if (hits.empty())
                 _get_pixelframe_from_qcores();
-            return hits_;
+
+            std::vector<std::vector<HitCoord>> output;
+
+            output.push_back(hits);
+
+            for (auto &event : events)
+            {
+                output.push_back(event.get_hits()[0]);
+            }
+
+            return output;
         }
 
         /**
@@ -467,10 +525,13 @@ namespace RD53
 
     private:
         /** The vector of hits in the event */
-        std::vector<HitCoord> hits_;
+        std::vector<HitCoord> hits;
 
         /** The vector of QuarterCore objects representing the quarter cores in the event */
-        std::vector<QuarterCore> qcores_;
+        std::vector<QuarterCore> qcores;
+
+        /** The vector of sub-events in the event */
+        std::vector<Event> events;
 
         /**
          * @brief Retrieves the quarter core data in the event
@@ -495,6 +556,59 @@ namespace RD53
          */
         void _get_pixelframe_from_qcores();
     };
+
+    /**
+     * @brief Represents a TEPXEvent object.
+     *
+     * The TEPXEvent class encapsulates the details of a TEPX event, which includes vectors of hits,
+     * quarter cores, and sub-events. It provides methods to retrieve and manipulate this event data.
+     */
+    class TEPXEvent
+    {
+    public:
+        TEPXEvent() = default;
+
+        /**
+         * @brief Constructs an Event object
+         *
+         * @param config The StreamConfig object that contains the configuration parameters
+         * @param header The StreamHeader object that contains the header of the event
+         * @param hits The vector of hits in the event
+         */
+        TEPXEvent(const StreamConfig &config, const StreamHeader &header, const std::vector<HitCoord> &hits);
+
+        /**
+         * @brief Constructs an Event object with hits
+         *
+         * This constructor initializes an Event object using a given configuration,
+         * header, and a nested vector of hits.
+         *
+         * @param config The StreamConfig object that contains the configuration parameters
+         * @param header The StreamHeader object that contains the header of the event
+         * @param hits A nested vector of HitCoord objects representing the hits in the event
+         */
+        TEPXEvent(const StreamConfig &config, const StreamHeader &header, const std::vector<std::vector<HitCoord>> &frames_);
+
+        /** The StreamConfig object that contains the configuration parameters */
+        const StreamConfig config;
+
+        /** The event header */
+        const StreamHeader header;
+
+        /**
+         * @brief serialize the event
+         * 
+         * @return std::array<std::vector<word_t>, 4> 
+         */
+        std::array<std::vector<word_t>, 4> serialize_event();
+
+
+    private:
+        std::vector<std::vector<HitCoord>> frames;
+
+        std::array<Event, 4> chips;
+    };
+
 
     /**
      * @brief A class for decoding streams of RD53 event data

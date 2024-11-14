@@ -6,11 +6,11 @@
 using namespace RD53;
 
 Event::Event(const StreamConfig &config_, const StreamHeader &header_, const std::vector<HitCoord> &hits_)
-    : config(config_), header(header_), hits_(hits_)
+    : config(config_), header(header_), hits(hits_)
 {}
 
 Event::Event(const StreamConfig &config_, const StreamHeader &header_, std::vector<QuarterCore> &qcores_)
-    : config(config_), header(header_), qcores_(qcores_)
+    : config(config_), header(header_), qcores(qcores_)
 {
     // update address of config in qcores
     for (auto &qcore : qcores_)
@@ -19,9 +19,59 @@ Event::Event(const StreamConfig &config_, const StreamHeader &header_, std::vect
     }
 }
 
-Event::Event(const Event &other) : config(other.config), header(other.header), hits_(other.hits_), qcores_(other.qcores_)
+Event::Event(const StreamConfig &config_, const StreamHeader &header_, const std::vector<std::vector<HitCoord>> &frames_): config(config_), header(header_)
 {
-    for (auto &qcore : qcores_)
+
+    bool first = true;
+
+    for (auto hits : frames_)
+    {
+        StreamHeader sub_header = header;
+
+        sub_header.l1id++;
+        sub_header.bcid++;
+        sub_header.trigger_pos = sub_header.trigger_pos >= 3 ? 0 : sub_header.trigger_pos + 1;
+
+        if(sub_header.trigger_pos == 3)
+            first = false;
+
+        if (sub_header.trigger_pos == 0 && !first)
+            sub_header.trigger_tag = sub_header.trigger_tag >= 31 ? 0 : sub_header.trigger_tag + 1;
+        
+
+        events.push_back(Event(config_, sub_header, hits));
+    }
+
+}
+
+Event::Event(const StreamConfig &config_, const StreamHeader &header_, std::vector<std::vector<QuarterCore>> &frames_): config(config_), header(header_)
+{
+    bool first = true;
+
+    for (auto qcores : frames_)
+    {
+        StreamHeader sub_header = header;
+
+        sub_header.l1id++;
+        sub_header.bcid++;
+        sub_header.trigger_pos = sub_header.trigger_pos >= 3 ? 0 : sub_header.trigger_pos + 1;
+
+        if(sub_header.trigger_pos == 3)
+            first = false;
+
+        if (sub_header.trigger_pos == 0 && !first)
+            sub_header.trigger_tag = sub_header.trigger_tag >= 31 ? 0 : sub_header.trigger_tag + 1;
+
+        
+
+        events.push_back(Event(config_, sub_header, qcores));
+    }
+}
+
+
+Event::Event(const Event &other) : config(other.config), header(other.header), hits(other.hits), qcores(other.qcores), events(other.events)
+{
+    for (auto &qcore : qcores)
     {
         qcore.set_config(&config);
     }
@@ -32,7 +82,7 @@ Event &Event::operator=(const Event &other)
     if (&other != this)
         *this = other;
 
-    for (auto &qcore : qcores_)
+    for (auto &qcore : qcores)
     {
         qcore.set_config(&config);
     }
@@ -42,14 +92,14 @@ Event &Event::operator=(const Event &other)
 
 void Event::_get_qcores_from_pixelframe()
 {
-    if (!qcores_.empty())
+    if (!qcores.empty())
         throw std::runtime_error("QuarterCores already set in event");
-    if (hits_.empty())
+    if (hits.empty())
         throw std::runtime_error("No hits in event");
 
     std::map<std::pair<int, int>, QuarterCore> qcore_dict;
 
-    for (const auto [x, y, tot] : hits_)
+    for (const auto [x, y, tot] : hits)
     {
 
         uint16_t col_in_qcore = x % config.size_qcore_horizontal;
@@ -95,45 +145,53 @@ void Event::_get_qcores_from_pixelframe()
             qcore.set_is_neighbour(key.first == prev_key.first && key.second == prev_key.second + 1);
         }
 
-        qcores_.push_back(qcore);
+        qcores.push_back(qcore);
     }
 }
 
 void Event::_get_pixelframe_from_qcores()
 {
-    if (!hits_.empty())
+    if (!hits.empty())
         throw std::runtime_error("Hits already set in event");
-    if (qcores_.empty())
+    if (qcores.empty())
         throw std::runtime_error("No qcores in event");
 
-    hits_ = {};
+    hits = {};
 
-    for (auto &qcore : qcores_)
+    for (auto &qcore : qcores)
     {
         auto qcore_coords = qcore.get_hit_vectors();
         auto col = qcore.get_col(), row = qcore.get_row();
 
         for (auto &&[x, y, tot] : qcore_coords)
         {
-            hits_.push_back(HitCoord(x + col * config.size_qcore_horizontal, y + row * config.size_qcore_vertical, tot));
+            hits.push_back(HitCoord(x + col * config.size_qcore_horizontal, y + row * config.size_qcore_vertical, tot));
         }
     }
 }
 
 std::vector<word_t> Event::serialize_event()
 {
-    if (qcores_.empty())
+    if (qcores.empty() && !hits.empty())
         _get_qcores_from_pixelframe();
-
-    auto packets = _retrieve_qcore_data();
 
     const uint8_t WORD_SIZE = config.chip_id ? 61 : 63;
     std::vector<word_t> result;
     word_t current_word = 0;
     uint8_t current_size = 0;
 
+    std::vector<std::tuple<uint8_t, RD53::word_t, DataTags>> packets = _retrieve_qcore_data();
+
     packets.insert(packets.begin(), std::make_tuple(8, (header.trigger_tag << 2) | (header.trigger_pos & 0b11), DataTags::TRIGGER_TAG));
 
+    for (auto event : events) 
+    {
+        auto subeventpackets = event._retrieve_qcore_data();
+        subeventpackets.insert(subeventpackets.begin(), std::make_tuple(11, 0b111 << 8 | ((event.header.trigger_tag & 0x3F) << 2) | (event.header.trigger_pos & 0b11), DataTags::TRIGGER_TAG));
+
+        packets.insert(packets.end(), subeventpackets.begin(), subeventpackets.end());
+    }
+    
     switch (config.l1id << 1 | config.bcid)
     {
     case 0b01:
@@ -228,7 +286,7 @@ std::vector<std::tuple<uint8_t, unsigned long long, DataTags>> Event::_retrieve_
     bool prev_last_in_col = true;
     std::vector<std::tuple<uint8_t, unsigned long long, DataTags>> qcore_packages;
 
-    for (const auto &qcore : qcores_)
+    for (const auto &qcore : qcores)
     {
         auto qcore_data = qcore.serialize_qcore(prev_last_in_col);
         qcore_packages.insert(qcore_packages.end(), qcore_data.begin(), qcore_data.end());
@@ -247,13 +305,13 @@ std::string Event::as_str() const
     ss << "header: " << header.as_str() << std::endl;
 
     // auto qcores_data = get_qcores();
-    for (const auto &qcore : qcores_)
+    for (const auto &qcore : qcores)
     {
         ss << qcore.as_str() << std::endl;
     }
 
     // auto hits_data = get_hits();
-    for (const auto [x, y, val] : hits_)
+    for (const auto [x, y, val] : hits)
     {
         ss << "(" << x << ", " << y << ", " << val << ")";
     }

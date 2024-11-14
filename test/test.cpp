@@ -67,7 +67,7 @@ int main()
     
     std::cout << "Qcores match!" << std::endl;
 
-    auto received_hits = decoder.get_events()[0].get_hits();
+    auto received_hits = decoder.get_events()[0].get_hits()[0];
 
     std::sort(received_hits.begin(), received_hits.end(),
               [](const auto &a, const auto &b)

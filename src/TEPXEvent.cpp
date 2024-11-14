@@ -57,7 +57,11 @@ TEPXEvent::TEPXEvent(const StreamConfig &config_, const StreamHeader &header_, c
 
     for (uint8_t i = 0; i < 4; i++)
     {
-        chips[i] = Event(config, header, subframes[i]);
+        StreamHeader h = header;
+
+        h.chip_id = i;
+
+        chips[i] = Event(config, h, subframes[i]);
     }
 
 

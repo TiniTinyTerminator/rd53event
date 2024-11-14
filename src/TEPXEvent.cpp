@@ -19,7 +19,7 @@ TEPXEvent::TEPXEvent(const StreamConfig &config_, const StreamHeader &header_, c
     auto shift_hit = [chip_height, chip_width](HitCoord hit)
     {
         auto [x, y, tot] = hit;
-        return HitCoord(x % chip_height, y % chip_width, tot);
+        return HitCoord(x % chip_width, y % chip_height, tot);
     };
 
     for (uint8_t i = 0; i < 4; i++)
@@ -32,13 +32,13 @@ TEPXEvent::TEPXEvent(const StreamConfig &config_, const StreamHeader &header_, c
             switch (i)
             {
             case 0:
-                return x < chip_height && y < chip_width;
+                return x < chip_width && y < chip_height;
             case 1:
-                return x < chip_height && y > chip_width;
+                return x < chip_width && y >= chip_height;
             case 2:
-                return x > chip_height && y < chip_width;
+                return x >= chip_width && y < chip_height;
             case 3:
-                return x > chip_height && y > chip_width;
+                return x >= chip_width && y >= chip_height;
             }
 
             return false;
@@ -48,23 +48,24 @@ TEPXEvent::TEPXEvent(const StreamConfig &config_, const StreamHeader &header_, c
         {
             subframes[i].push_back(std::vector<HitCoord>());
 
-            auto subframe = subframes[i].end() - 1;
+            auto & subframe = subframes[i][subframes[i].size() - 1];
 
-            std::copy_if(frame.begin(), frame.end(), std::back_inserter(*subframe), is_in_quadrant);
-            std::transform(subframe->begin(), subframe->end(), std::back_inserter(*subframe), shift_hit);
+
+            std::copy_if(frame.begin(), frame.end(), std::back_inserter(subframe), is_in_quadrant);
+
+            std::vector<HitCoord> tmp;
+
+            std::transform(subframe.begin(), subframe.end(), std::back_inserter(tmp), shift_hit);
+
+            subframe = tmp;
         }
-    }
-
-    for (uint8_t i = 0; i < 4; i++)
-    {
+    
         StreamHeader h = header;
 
         h.chip_id = i;
 
         chips[i] = Event(config, h, subframes[i]);
     }
-
-
 
 }
 

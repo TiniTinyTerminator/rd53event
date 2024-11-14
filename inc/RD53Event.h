@@ -397,7 +397,7 @@ namespace RD53
     public:
         Event() = default;
         Event(const Event &other);
-        Event &operator=(const Event &other);
+        Event operator=(const Event &other);
 
         /**
          * @brief Constructs an Event object
@@ -450,12 +450,6 @@ namespace RD53
          * @return A vector of 64-bit integers containing the serialized event data
          */
         std::vector<word_t> serialize_event();
-
-        /** The StreamConfig object that contains the configuration parameters */
-        const StreamConfig config;
-
-        /** The event header */
-        const StreamHeader header;
 
         /**
          * Retrieves the vector of QuarterCore objects representing the quarter cores in the event.
@@ -520,7 +514,13 @@ namespace RD53
          */
         std::string as_str() const;
 
+        /** The StreamConfig object that contains the configuration parameters */
+        StreamConfig config;
+
+        /** The event header */
+        StreamHeader header;
     private:
+
         /** The vector of hits in the event */
         std::vector<HitCoord> hits;
 

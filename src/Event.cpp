@@ -7,7 +7,8 @@ using namespace RD53;
 
 Event::Event(const StreamConfig &config_, const StreamHeader &header_, const std::vector<HitCoord> &hits_)
     : config(config_), header(header_), hits(hits_)
-{}
+{
+}
 
 Event::Event(const StreamConfig &config_, const StreamHeader &header_, std::vector<QuarterCore> &qcores_)
     : config(config_), header(header_), qcores(qcores_)
@@ -19,12 +20,12 @@ Event::Event(const StreamConfig &config_, const StreamHeader &header_, std::vect
     }
 }
 
-Event::Event(const StreamConfig &config_, const StreamHeader &header_, const std::vector<std::vector<HitCoord>> &frames_): config(config_), header(header_)
+Event::Event(const StreamConfig &config_, const StreamHeader &header_, const std::vector<std::vector<HitCoord>> &frames_) : config(config_), header(header_), hits(frames_[0])
 {
 
     bool first = true;
 
-    for (auto hits : frames_)
+    for (uint64_t i = 1; i < frames_.size(); i++)
     {
         StreamHeader sub_header = header;
 
@@ -32,23 +33,21 @@ Event::Event(const StreamConfig &config_, const StreamHeader &header_, const std
         sub_header.bcid++;
         sub_header.trigger_pos = sub_header.trigger_pos >= 3 ? 0 : sub_header.trigger_pos + 1;
 
-        if(sub_header.trigger_pos == 3)
+        if (sub_header.trigger_pos == 3)
             first = false;
 
         if (sub_header.trigger_pos == 0 && !first)
             sub_header.trigger_tag = sub_header.trigger_tag >= 31 ? 0 : sub_header.trigger_tag + 1;
-        
 
-        events.push_back(Event(config_, sub_header, hits));
+        events.push_back(Event(config_, sub_header, frames_[i]));
     }
-
 }
 
-Event::Event(const StreamConfig &config_, const StreamHeader &header_, std::vector<std::vector<QuarterCore>> &frames_): config(config_), header(header_)
+Event::Event(const StreamConfig &config_, const StreamHeader &header_, std::vector<std::vector<QuarterCore>> &frames_) : config(config_), header(header_)
 {
     bool first = true;
 
-    for (auto qcores : frames_)
+    for (uint64_t i = 1; i < frames_.size(); i++)
     {
         StreamHeader sub_header = header;
 
@@ -56,18 +55,15 @@ Event::Event(const StreamConfig &config_, const StreamHeader &header_, std::vect
         sub_header.bcid++;
         sub_header.trigger_pos = sub_header.trigger_pos >= 3 ? 0 : sub_header.trigger_pos + 1;
 
-        if(sub_header.trigger_pos == 3)
+        if (sub_header.trigger_pos == 3)
             first = false;
 
         if (sub_header.trigger_pos == 0 && !first)
             sub_header.trigger_tag = sub_header.trigger_tag >= 31 ? 0 : sub_header.trigger_tag + 1;
 
-        
-
-        events.push_back(Event(config_, sub_header, qcores));
+        events.push_back(Event(config_, sub_header, frames_[i]));
     }
 }
-
 
 Event::Event(const Event &other) : config(other.config), header(other.header), hits(other.hits), qcores(other.qcores), events(other.events)
 {
@@ -77,15 +73,13 @@ Event::Event(const Event &other) : config(other.config), header(other.header), h
     }
 }
 
-Event &Event::operator=(const Event &other)
+Event Event::operator=(const Event &other)
 {
-    if (&other != this)
-        *this = other;
-
-    for (auto &qcore : qcores)
-    {
-        qcore.set_config(&config);
-    }
+    config = other.config;
+    header = other.header;
+    hits = other.hits;
+    qcores = other.qcores;
+    events = other.events;
 
     return *this;
 }
@@ -115,7 +109,7 @@ void Event::_get_qcores_from_pixelframe()
         qcore_dict[{qcol, qrow}].set_hit(col_in_qcore, row_in_qcore, tot);
     }
 
-    //TODO reverse column order (columns decrements from 55 to 1)
+    // TODO reverse column order (columns decrements from 55 to 1)
 
     for (auto it = qcore_dict.begin(); it != qcore_dict.end(); ++it)
     {
@@ -184,14 +178,14 @@ std::vector<word_t> Event::serialize_event()
 
     packets.insert(packets.begin(), std::make_tuple(8, (header.trigger_tag << 2) | (header.trigger_pos & 0b11), DataTags::TRIGGER_TAG));
 
-    for (auto event : events) 
+    for (auto event : events)
     {
         auto subeventpackets = event._retrieve_qcore_data();
         subeventpackets.insert(subeventpackets.begin(), std::make_tuple(11, 0b111 << 8 | ((event.header.trigger_tag & 0x3F) << 2) | (event.header.trigger_pos & 0b11), DataTags::TRIGGER_TAG));
 
         packets.insert(packets.end(), subeventpackets.begin(), subeventpackets.end());
     }
-    
+
     switch (config.l1id << 1 | config.bcid)
     {
     case 0b01:

@@ -17,7 +17,7 @@ set(SRC ${CMAKE_SOURCE_DIR}/src)
 include_directories(${INC})
 
 # Add the RD53 library
-add_library(RD53Event STATIC
+add_library(RD53Event SHARED
     ${SRC}/Quartercore.cpp
     ${SRC}/Event.cpp
     ${SRC}/Decoder.cpp
@@ -26,7 +26,7 @@ add_library(RD53Event STATIC
 )
 
 set_target_properties(RD53Event PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib
 )
 
 add_subdirectory(python)

@@ -81,6 +81,11 @@ Event Event::operator=(const Event &other)
     qcores = other.qcores;
     events = other.events;
 
+    for (auto &qcore : qcores)
+    {
+        qcore.set_config(&config);
+    }
+
     return *this;
 }
 

@@ -101,12 +101,12 @@ void Event::_get_qcores_from_pixelframe()
         uint16_t row_in_qcore = y % config.size_qcore_vertical;
         uint16_t qrow = (y - row_in_qcore) / config.size_qcore_vertical;
 
-        if (qcore_dict.find({qcol, qrow}) == qcore_dict.end())
+        if (qcore_dict.find({-qcol, qrow}) == qcore_dict.end())
         {
-            qcore_dict[{qcol, qrow}] = QuarterCore(config, qcol, qrow);
+            qcore_dict[{-qcol, qrow}] = QuarterCore(config, qcol, qrow);
         }
 
-        qcore_dict[{qcol, qrow}].set_hit(col_in_qcore, row_in_qcore, tot);
+        qcore_dict[{-qcol, qrow}].set_hit(col_in_qcore, row_in_qcore, tot);
     }
 
     // TODO reverse column order (columns decrements from 55 to 1)

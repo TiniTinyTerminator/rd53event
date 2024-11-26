@@ -418,7 +418,7 @@ namespace RD53
          * @param header The StreamHeader object that contains the header of the event
          * @param qcores The vector of QuarterCore objects that contain the hits in the event
          */
-        Event(const StreamConfig &config, const StreamHeader &header, std::vector<QuarterCore> &qcores);
+        Event(const StreamConfig &config, const StreamHeader &header, const std::vector<QuarterCore> &qcores);
 
         /**
          * @brief Constructs an Event object with hits
@@ -442,7 +442,7 @@ namespace RD53
          * @param header The StreamHeader object that contains the header of the event
          * @param qcores A nested vector of QuarterCore objects containing the hits in the event
          */
-        Event(const StreamConfig &config, const StreamHeader &header, std::vector<std::vector<QuarterCore>> &frames);
+        Event(const StreamConfig &config, const StreamHeader &header, const std::vector<std::vector<QuarterCore>> &frames);
 
         /**
          * @brief Serializes the event data into a vector of 64-bit integers
@@ -520,6 +520,8 @@ namespace RD53
         /** The event header */
         StreamHeader header;
     private:
+        Event(const StreamConfig &config, const std::vector<std::pair<StreamHeader, std::vector<QuarterCore>>>);
+
 
         /** The vector of hits in the event */
         std::vector<HitCoord> hits;
@@ -552,6 +554,8 @@ namespace RD53
          * _get_pixelframe_from_qcores() method of each QuarterCore object in the qcores vector.
          */
         void _get_pixelframe_from_qcores();
+    
+        friend class Decoder;
     };
 
     /**
@@ -626,7 +630,7 @@ namespace RD53
          */
         void process_stream();
 
-        std::vector<Event> get_events() const;
+        Event get_event() const;
 
     private:
         /**

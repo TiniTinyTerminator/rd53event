@@ -2,7 +2,9 @@ import random
 import sys
 import os
 # Ensure the generated SWIG module is in the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', "RD53Event")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+print(sys.path)
 
 from RD53Event import *
 
@@ -55,12 +57,12 @@ if __name__ == "__main__":
 
         print("hello")
 
-        print(qcores)
+        # print(qcores)
 
 
-        print(qcores[0])
+        # print(qcores[0])
 
-        other_event = Event(conf,header2,qcores)
+        other_event = Event(conf,header2,qcores[0])
 
         print(other_event.get_hits())
 
@@ -73,9 +75,9 @@ if __name__ == "__main__":
 
         decoder.process_stream()
 
-        events = decoder.get_events()
+        events = decoder.get_event()
 
-        hit_decoded = events[0].get_hits()
+        hit_decoded = events.get_hits()[0]
 
         hit_decoded = {(x, y): val for (x, y, val) in hit_decoded}
         input_hits = {(x, y): val for (x, y, val) in input_hits}

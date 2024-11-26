@@ -68,9 +68,9 @@ int main()
 
         decoder.process_stream();
 
-        auto events = decoder.get_events();
+        auto events = decoder.get_event();
 
-        auto received_hits = decoder.get_events()[0].get_hits()[0];
+        auto received_hits = decoder.get_event().get_hits()[0];
 
         std::sort(received_hits.begin(), received_hits.end(),
                   [](const auto &a, const auto &b)

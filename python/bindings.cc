@@ -186,6 +186,6 @@ PYBIND11_MODULE(RD53Eventpy, m) {
              "Constructs a new Decoder object with the specified configuration and event data stream.")
         .def("process_stream", &RD53::Decoder::process_stream,
              "Decodes the event data stream.")
-        .def("get_events", &RD53::Decoder::get_events,
+        .def("get_event", &RD53::Decoder::get_event,
              "Returns the list of decoded Event objects.");
 }

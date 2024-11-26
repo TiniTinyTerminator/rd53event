@@ -10,11 +10,11 @@ Event::Event(const StreamConfig &config_, const StreamHeader &header_, const std
 {
 }
 
-Event::Event(const StreamConfig &config_, const StreamHeader &header_, std::vector<QuarterCore> &qcores_)
+Event::Event(const StreamConfig &config_, const StreamHeader &header_, const std::vector<QuarterCore> &qcores_)
     : config(config_), header(header_), qcores(qcores_)
 {
     // update address of config in qcores
-    for (auto &qcore : qcores_)
+    for (auto &qcore : qcores)
     {
         qcore.set_config(&config);
     }
@@ -43,7 +43,7 @@ Event::Event(const StreamConfig &config_, const StreamHeader &header_, const std
     }
 }
 
-Event::Event(const StreamConfig &config_, const StreamHeader &header_, std::vector<std::vector<QuarterCore>> &frames_) : config(config_), header(header_)
+Event::Event(const StreamConfig &config_, const StreamHeader &header_, const std::vector<std::vector<QuarterCore>> &frames_) : config(config_), header(header_)
 {
     bool first = true;
 
@@ -62,6 +62,20 @@ Event::Event(const StreamConfig &config_, const StreamHeader &header_, std::vect
             sub_header.trigger_tag = sub_header.trigger_tag >= 31 ? 0 : sub_header.trigger_tag + 1;
 
         events.push_back(Event(config_, sub_header, frames_[i]));
+    }
+}
+
+Event::Event(const StreamConfig &config_, const std::vector<std::pair<StreamHeader, std::vector<QuarterCore>>> events_) : Event(config_, events_[0].first, events_[0].second)
+{
+    bool first = true;
+
+    for (auto it = events_.begin() + 1; it != events_.end(); it++)
+    {
+
+        auto [header_, event_] = *it;
+
+
+        events.push_back(Event(config_, header_, event_));
     }
 }
 

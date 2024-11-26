@@ -392,16 +392,7 @@ uint64_t Decoder::_get_tots(uint16_t hit_raw)
     return tots;
 }
 
-std::vector<Event> Decoder::get_events() const
+Event Decoder::get_event() const
 {
-    std::vector<Event> processed_events;
-
-    uint32_t i = 0;
-
-    for (auto [header, qcores] : events_)
-    {
-        processed_events.push_back(Event(config_, header, qcores));
-    }
-
-    return processed_events;
+    return Event(config_, events_);
 }

@@ -175,6 +175,7 @@ PYBIND11_MODULE(RD53Eventpy, m) {
              "Constructs a TEPXEvent object with specified configuration, header, and nested vector of hits.")
         .def("serialize_event", &RD53::TEPXEvent::serialize_event,
              "Serializes the TEPXEvent data into an array of vectors of 64-bit integers.")
+        .def("get_chip", &RD53::TEPXEvent::get_chip, py::arg("chip_id"), "Retrieves the Event object for the specified chip.")
         .def_readonly("config", &RD53::TEPXEvent::config, "The StreamConfig object that contains the configuration parameters.")
         .def_readonly("header", &RD53::TEPXEvent::header, "The StreamHeader object that contains the header of the event.");
         // Note: Since the TEPXEvent class does not expose methods to get frames or chips, we only bind what's available.

@@ -460,7 +460,9 @@ namespace RD53
          */
         std::vector<std::vector<QuarterCore>> get_qcores()
         {
-            if (qcores.empty())
+            if (hits.empty() && qcores.empty())
+                return std::vector<std::vector<QuarterCore>>();
+            else if (qcores.empty())
                 _get_qcores_from_pixelframe();
 
             std::vector<std::vector<QuarterCore>> output;
@@ -492,7 +494,9 @@ namespace RD53
          */
         std::vector<std::vector<HitCoord>> get_hits()
         {
-            if (hits.empty())
+            if (hits.empty() && qcores.empty())
+                return std::vector<std::vector<HitCoord>>();
+            else if (hits.empty())
                 _get_pixelframe_from_qcores();
 
             std::vector<std::vector<HitCoord>> output;
@@ -603,6 +607,13 @@ namespace RD53
          */
         std::array<std::vector<word_t>, 4> serialize_event();
 
+        /**
+         * @brief Get the chip
+         * 
+         * @param chip_id 
+         * @return const Event 
+         */
+        const Event get_chip(uint8_t chip_id) const { return chips[chip_id]; }
 
     private:
         std::vector<std::vector<HitCoord>> frames;

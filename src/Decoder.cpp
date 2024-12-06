@@ -80,7 +80,7 @@ word_t Decoder::_shift_stream(size_t bit_index)
 
     word_t full_word = first_word | second_word;
 
-    if constexpr (DEBUG)
+    if (debug)
     {
         std::string word_str = std::bitset<64>(full_word).to_string().erase(0, word_meta_size_);
         std::string first_word_str(word_str, 0, word_size_ - bit_offset);
@@ -145,7 +145,7 @@ void Decoder::_get_trigger_tag()
     current_header_->trigger_tag = tag >> 2;
     current_header_->trigger_pos = tag & 0b11;
 
-    if constexpr (DEBUG)
+    if (debug)
         std::cout << "Trigger tag: " << static_cast<uint32_t>(current_header_->trigger_tag) << ", pos: " << static_cast<uint32_t>(current_header_->trigger_pos) << std::endl;
 
     if ((config_.l1id || config_.bcid) && current_event_ == events_.begin())
@@ -176,7 +176,7 @@ void Decoder::_get_trigger_ids()
         break;
     }
 
-    if constexpr (DEBUG)
+    if (debug)
         std::cout << "ids: " << current_header_->bcid << " " << current_header_->l1id << std::endl;
 }
 
@@ -186,7 +186,7 @@ void Decoder::_get_col()
 
     uint8_t col = _get_nbits(data_widths::COL_WIDTH);
 
-    if constexpr (DEBUG)
+    if (debug)
         std::cout << "col: " << static_cast<uint32_t>(col) << std::endl;
 
     if (col == 0)
@@ -232,14 +232,14 @@ void Decoder::_get_neighbour_and_last()
 
     qc_.set_is_neighbour(_get_nbits(1));
 
-    if constexpr (DEBUG)
+    if (debug)
         std::cout << "is_neighbour: " << static_cast<uint32_t>(qc_.get_is_neighbour()) << " is_last: " << static_cast<uint32_t>(qc_.get_is_last()) << std::endl;
 
     if (qc_.get_is_neighbour())
     {
         qc_.set_row(qc_.get_row() + 1);
 
-        if constexpr (DEBUG)
+        if (debug)
             std::cout << "row: " << static_cast<uint32_t>(qc_.get_row()) << std::endl;
 
         _get_hitmap();
@@ -254,7 +254,7 @@ void Decoder::_get_row()
 
     uint8_t row = _get_nbits(data_widths::ROW_WIDTH);
 
-    if constexpr (DEBUG)
+    if (debug)
         std::cout << "row: " << static_cast<uint32_t>(row) << std::endl;
 
     qc_.set_row(row);
@@ -274,7 +274,7 @@ void Decoder::_get_hitmap()
         state = DataTags::S1;
         auto [s1, read_bits] = decode_bitpair(_get_nbits(2, false));
 
-        if constexpr (DEBUG)
+        if (debug)
             std::cout << std::bitset<2>(s1) << std::endl;
 
         bit_index_ += read_bits;
@@ -287,7 +287,7 @@ void Decoder::_get_hitmap()
             state = DataTags::S2;
             auto [s2, read_bits] = decode_bitpair(_get_nbits(2, false));
 
-            if constexpr (DEBUG)
+            if (debug)
                 std::cout << std::bitset<2>(s2) << std::endl;
 
             bit_index_ += read_bits;
@@ -302,7 +302,7 @@ void Decoder::_get_hitmap()
                 state = DataTags::S3;
                 auto [s3, read_bits] = decode_bitpair(_get_nbits(2, false));
 
-                if constexpr (DEBUG)
+                if (debug)
                     std::cout << std::bitset<2>(s3) << std::endl;
 
                 bit_index_ += read_bits;
@@ -325,7 +325,7 @@ void Decoder::_get_hitmap()
                     state = DataTags::HITPAIR;
                     auto [hitpair, read_bits] = decode_bitpair(_get_nbits(2, false));
 
-                    if constexpr (DEBUG)
+                    if (debug)
                         std::cout << std::bitset<2>(hitpair) << std::endl;
 
                     hit_raw |= (((hitpair & 0b01) << 1) | ((hitpair & 0b10) >> 1)) << (j * 4 + k * 2 + i * 8);
@@ -349,7 +349,7 @@ void Decoder::_get_hitmap()
 
     qc_.set_hit_raw(hit_raw, tots_raw);
 
-    if constexpr (DEBUG)
+    if (debug)
         std::cout << "HITS_RAW: " << std::bitset<16>(hit_raw) << " TOTS_RAW: " << std::bitset<64>(tots_raw) << std::endl;
 
     current_qcores_->push_back(qc_);

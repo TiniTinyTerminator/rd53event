@@ -25,8 +25,6 @@
 
 #include "utils.h"
 
-constexpr bool DEBUG = false;
-
 namespace RD53
 {
 
@@ -518,6 +516,8 @@ namespace RD53
          */
         std::string as_str() const;
 
+        void set_debug(bool debug) { this->debug = debug; }
+
         /** The StreamConfig object that contains the configuration parameters */
         StreamConfig config;
 
@@ -526,6 +526,10 @@ namespace RD53
     private:
         Event(const StreamConfig &config, const std::vector<std::pair<StreamHeader, std::vector<QuarterCore>>>);
 
+        /**
+         * @brief debug
+         */
+        bool debug = false;
 
         /** The vector of hits in the event */
         std::vector<HitCoord> hits;
@@ -643,6 +647,8 @@ namespace RD53
 
         Event get_event() const;
 
+        void set_debug(bool debug) { this->debug = debug; }
+
     private:
         /**
          * @brief Validates the chip ID field
@@ -709,6 +715,11 @@ namespace RD53
          * @brief Indicates the start of a new event
          */
         inline void _new_event();
+
+        /**
+         * @brief debug variable
+        */
+        bool debug = false;
 
         /**
          * @brief The bit index of the event data stream

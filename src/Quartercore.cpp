@@ -294,7 +294,7 @@ std::string QuarterCore::as_str() const
     str << std::left << "  Is Neighbour: " << std::right << std::setw(7) << (is_neighbour_ ? "true " : "false") << "\n";
     str << std::left << "  Is Last Row: " << std::right << std::setw(8) << (is_last_ ? "true " : "false") << "\n";
     str << std::left << "  Hits (raw): " << std::right << std::setw(10) << std::bitset<16>(hits_) << "\n";
-    str << std::left << "  Tot Values: " << std::right << std::setw(10) << std::bitset<64>(tots_) << "\n";
+    str << std::left << "  Tot Values: " << std::right << std::setw(10) << std::hex << std::setw(16) << std::setfill('0') << tots_ << "\n";
 
     if (config_ != nullptr)
     {

@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <stdexcept>
+#include <iomanip>
 #include <vector>
 #include <limits>
 #include <bitset>
@@ -97,8 +98,11 @@ word_t Decoder::_shift_stream(size_t bit_index)
             const auto first_bracket = std::string(bgc[Color::BRIGHT_YELLOW]);
             const auto second_bracket = std::string(bgc[Color::RESET]);
 
-            str.insert(fgc[Color::CYAN].size(), first_bracket);
-            str.insert(jump_size_ + fgc[Color::CYAN].size() + first_bracket.size(), second_bracket);
+            str.insert(0, first_bracket);
+
+            uint16_t overlap_increment = word_size_ - bit_offset < jump_size_ ? fgc[Color::GREEN].size() : 0;
+
+            str.insert(jump_size_ + fgc[Color::CYAN].size() + first_bracket.size() + overlap_increment, second_bracket);
         }
 
         std::cout << str << std::endl;
@@ -350,7 +354,7 @@ void Decoder::_get_hitmap()
     qc_.set_hit_raw(hit_raw, tots_raw);
 
     if (debug)
-        std::cout << "HITS_RAW: " << std::bitset<16>(hit_raw) << " TOTS_RAW: " << std::bitset<64>(tots_raw) << std::endl;
+        std::cout << "HITS_RAW: " << std::bitset<16>(hit_raw) << " TOTS_RAW: " << std::hex << std::setw(16) << std::setfill('0') << tots_raw << std::endl;
 
     current_qcores_->push_back(qc_);
 
